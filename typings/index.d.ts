@@ -116,6 +116,7 @@ declare module 'react-digraph' {
     canDeleteEdge?: (selected: any) => boolean;
     canDeleteNode?: (selected: any) => boolean;
     onCopySelected?: () => void;
+    onCutSelected?: () => void;
     onCreateEdge: (sourceNode: INode, targetNode: INode) => void;
     onCreateNode: (x: number, y: number, event: any) => void;
     onDeleteEdge: (selectedEdge: IEdge, edges: IEdge[]) => void;
@@ -125,6 +126,7 @@ declare module 'react-digraph' {
     onSelectNode: (node: INode | null) => void;
     onSwapEdge: (sourceNode: INode, targetNode: INode, edge: IEdge) => void;
     onUndo?: () => void;
+    onRedo?: () => void;
     onUpdateNode: (node: INode) => void;
     renderBackground?: (gridSize?: number) => any;
     renderDefs?: () => any;

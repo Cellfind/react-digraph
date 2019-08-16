@@ -286,7 +286,9 @@ Prop Types:
   canCreateEdge?: (startNode?: INode, endNode?: INode) => boolean;
   afterRenderEdge?: (id: string, element: any, edge: IEdge, edgeContainer: any, isEdgeSelected: boolean) => void;
   onUndo?: () => void;
+  onRedo?: () => void;
   onCopySelected?: () => void;
+  onCutSelected?: () => void;
   onPasteSelected?: () => void;
   renderBackground?: (gridSize?: number) => any;
   renderDefs?: () => any;
