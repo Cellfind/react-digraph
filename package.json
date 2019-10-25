@@ -1,7 +1,7 @@
 {
   "name": "@cellfind/react-digraph",
   "description": "directed graph react component",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "keywords": [
     "babel",
     "es6",
