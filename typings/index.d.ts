@@ -115,6 +115,7 @@ declare module 'react-digraph' {
     canCreateEdge?: (startNode?: INode, endNode?: INode) => boolean;
     canDeleteEdge?: (selected: any) => boolean;
     canDeleteNode?: (selected: any) => boolean;
+    canSwapEdge: (sourceNode: INode, targetNode: INode, edge: IEdge) => void;
     onCopySelected?: () => void;
     onCutSelected?: () => void;
     onCreateEdge: (sourceNode: INode, targetNode: INode) => void;
@@ -130,6 +131,7 @@ declare module 'react-digraph' {
     onUpdateNode: (node: INode) => void;
     renderBackground?: (gridSize?: number) => any;
     renderDefs?: () => any;
+    renderDropShadowDef?: () => any;
     renderNode?: (
       nodeRef: any,
       data: any,

@@ -1,6 +1,7 @@
 // @flow
 /*
-  Copyright(c) 2018 Uber Technologies, Inc.
+  Original Source Code - Copyright(c) 2018 Uber Technologies, Inc.
+  Modifications Thereof - Copyright(c) 2019 Cellfind Pty Ltd
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -144,6 +145,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   viewWrapper: React.RefObject<HTMLDivElement>;
   graphSvg: React.RefObject<SVGElement>;
   entities: any;
+  customGroup: any;
   selectedView: any;
   view: any;
   graphControls: any;
@@ -1501,6 +1503,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       nodeSubtypes,
       edgeTypes,
       renderDefs,
+      renderDropShadowDef,
       gridSize,
       backgroundFillId,
       renderBackground,
@@ -1517,6 +1520,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
             nodeSubtypes={nodeSubtypes}
             edgeTypes={edgeTypes}
             renderDefs={renderDefs}
+            renderDropShadowDef={renderDropShadowDef}
           />
           <g className="view" ref={el => (this.view = el)}>
             <Background
@@ -1524,7 +1528,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
               backgroundFillId={backgroundFillId}
               renderBackground={renderBackground}
             />
-
+            <g
+              className="custom-group-renders"
+              ref={el => (this.customGroup = el)}
+            />
             <g className="entities" ref={el => (this.entities = el)} />
           </g>
         </svg>

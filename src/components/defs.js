@@ -1,6 +1,7 @@
 // @flow
 /*
-  Copyright(c) 2018 Uber Technologies, Inc.
+  Original Source Code - Copyright(c) 2018 Uber Technologies, Inc.
+  Modifications Thereof - Copyright(c) 2019 Cellfind Pty Ltd
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -28,6 +29,7 @@ type IDefsProps = {
   nodeSubtypes: any,
   edgeTypes: any,
   renderDefs?: () => any | null,
+  renderDropShadowDef?: any | null,
 };
 
 type IDefsState = {
@@ -38,6 +40,7 @@ class Defs extends React.Component<IDefsProps, IDefsState> {
   static defaultProps = {
     gridDotSize: 2,
     renderDefs: () => null,
+    renderDropShadowDef: () => null,
   };
 
   static getDerivedStateFromProps(nextProps: any, prevState: any) {
@@ -87,7 +90,9 @@ class Defs extends React.Component<IDefsProps, IDefsState> {
           gridDotSize={gridDotSize}
         />
 
-        <DropshadowFilter />
+        {this.props.renderDropShadowDef
+          ? this.props.renderDropShadowDef()
+          : () => <DropshadowFilter />}
 
         {this.props.renderDefs && this.props.renderDefs()}
       </defs>

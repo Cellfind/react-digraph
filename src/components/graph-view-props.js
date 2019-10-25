@@ -55,6 +55,7 @@ export type IGraphViewProps = {
   canCreateEdge?: (startNode?: INode, endNode?: INode) => boolean,
   canDeleteEdge?: (selected: any) => boolean,
   canDeleteNode?: (selected: any) => boolean,
+  canSwapEdge: (sourceNode: INode, targetNode: INode, edge: IEdge) => boolean,
   onBackgroundClick?: (x: number, y: number, event: any) => void,
   onCutSelected?: () => void,
   onCopySelected?: () => void,
@@ -78,6 +79,7 @@ export type IGraphViewProps = {
     selected: boolean,
     hovered: boolean
   ) => any,
+  renderDropShadowDef?: () => any,
   afterRenderEdge?: (
     id: string,
     element: any,
