@@ -1072,6 +1072,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         }
 
         const sourceNode = sourceNodeById.node;
+        const { canSwapEdge, onSwapEdge } = this.props;
 
         if (
           edgeEndNode &&
@@ -1079,12 +1080,13 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
             draggedEdge.source,
             edgeEndNode[nodeKey]
           ) &&
-          this.canSwap(sourceNode, edgeEndNode, draggedEdge)
+          this.canSwap(sourceNode, edgeEndNode, draggedEdge) &&
+          (!canSwapEdge || canSwapEdge(sourceNode, edgeEndNode, draggedEdge))
         ) {
           // determine the target node and update the edge
           draggedEdgeCopy.target = edgeEndNode[nodeKey];
           this.syncRenderEdge(draggedEdgeCopy);
-          this.props.onSwapEdge(sourceNodeById.node, edgeEndNode, draggedEdge);
+          onSwapEdge(sourceNodeById.node, edgeEndNode, draggedEdge);
         } else {
           // this resets the dragged edge back to its original position.
           this.syncRenderEdge(draggedEdge);
@@ -1355,6 +1357,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         viewWrapperElem={this.viewWrapper.current}
         isSelected={this.isEdgeSelected(edge)}
         rotateEdgeHandle={this.props.rotateEdgeHandle}
+        edgeType={edge.edgeType}
       />
     );
   };
