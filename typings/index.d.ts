@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-declare module 'react-digraph' {
+declare module '@cellfind/react-digraph' {
   export type INode = {
     title: string;
     x?: number | null;
@@ -91,6 +91,7 @@ declare module 'react-digraph' {
 
   export type IGraphViewProps = {
     backgroundFillId?: string;
+    centerNodeOnMove?: boolean;
     edges: any[];
     edgeArrowSize?: number;
     edgeHandleSize?: number;
@@ -178,7 +179,46 @@ declare module 'react-digraph' {
 
   export type LayoutEngineType = 'None' | 'SnapToGrid' | 'VerticalTree';
 
+  type IGraphViewState = {
+    viewTransform?: IViewTransform,
+    hoveredNode: boolean,
+    nodesMap: any,
+    edgesMap: any,
+    nodes: any[],
+    edges: any[],
+    selectingNode: boolean,
+    hoveredNodeData: INode | null,
+    edgeEndNode: INode | null,
+    draggingEdge: boolean,
+    draggedEdge: any,
+    componentUpToDate: boolean,
+    selectedEdgeObj: any,
+    selectedNodeObj: any,
+    documentClicked: boolean,
+    svgClicked: boolean,
+    focused: boolean,
+  };
+
+  export interface IGraphView extends React.Component<IGraphViewProps, IGraphViewState> {
+    nodeTimeouts: any;
+    edgeTimeouts: any;
+    renderNodesTimeout: any;
+    renderEdgesTimeout: any;
+    zoom: any;
+    viewWrapper: React.RefObject<HTMLDivElement>;
+    graphSvg: React.RefObject<SVGElement>;
+    entities: any;
+    customGroup: any;
+    selectedView: any;
+    view: any;
+    graphControls: any;
+    layoutEngine: any;
+    panToNode: (id: string, zoom?: boolean = false) => void;
+    panToEdge: (source: string, target: string, zoom?: boolean) => void;
+  }
+
   export const GraphView: React.ComponentClass<IGraphViewProps>;
+
   export type INodeMapNode = {
     node: INode;
     originalArrIndex: number;
