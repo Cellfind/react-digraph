@@ -371,15 +371,17 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
       const prevNodeMapNode = this.getNodeById(nodeId, prevNodesMap);
 
-      // remove all outgoing edges
-      prevNodeMapNode.outgoingEdges.forEach(edge => {
-        this.removeEdgeElement(edge.source, edge.target);
-      });
+      if (prevNodeMapNode !== null) {
+        // remove all outgoing edges
+        prevNodeMapNode.outgoingEdges.forEach(edge => {
+          this.removeEdgeElement(edge.source, edge.target);
+        });
 
-      // remove all incoming edges
-      prevNodeMapNode.incomingEdges.forEach(edge => {
-        this.removeEdgeElement(edge.source, edge.target);
-      });
+        // remove all incoming edges
+        prevNodeMapNode.incomingEdges.forEach(edge => {
+          this.removeEdgeElement(edge.source, edge.target);
+        });
+      }
 
       // remove node
       // The timeout avoids a race condition
