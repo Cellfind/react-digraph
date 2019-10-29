@@ -90,11 +90,7 @@ class Defs extends React.Component<IDefsProps, IDefsState> {
           gridDotSize={gridDotSize}
         />
 
-        {this.props.renderDropShadowDef ? (
-          this.props.renderDropShadowDef()
-        ) : (
-          <DropshadowFilter />
-        )}
+        <DropshadowFilter />
 
         {this.props.renderDefs && this.props.renderDefs()}
       </defs>
