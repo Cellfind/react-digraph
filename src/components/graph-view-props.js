@@ -54,7 +54,9 @@ export type IGraphViewProps = {
   onUndo?: () => void,
   onRedo?: () => void,
   onUpdateNode: (node: INode) => void,
-  onUnhandledKeydown: (e: React.KeyboardEvent) => void,
+  onUnhandledKeydown?: (e: React.KeyboardEvent) => void,
+  onContextMenuNode?: (e: React.MouseEvent, data: INode) => void,
+  onContextMenuEdge?: (e: React.MouseEvent, data: IEdge) => void,
   renderBackground?: (gridSize?: number) => any,
   renderDefs?: () => any,
   renderNode?: (
@@ -73,6 +75,7 @@ export type IGraphViewProps = {
     isEdgeSelected: boolean
   ) => void,
   renderNodeText?: (data: any, id: string | number, isSelected: boolean) => any,
+  renderNodeHover?: (data: any, id: string | number) => any,
   rotateEdgeHandle?: boolean,
   centerNodeOnMove?: boolean,
   initialBBox: IBBox,

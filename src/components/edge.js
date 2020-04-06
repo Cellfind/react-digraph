@@ -35,6 +35,7 @@ type IEdgeProps = {
   nodeKey: string,
   viewWrapperElem: HTMLDivElement,
   rotateEdgeHandle: true,
+  onEdgeContextMenu: (event: any, data: any) => void,
 };
 
 class Edge extends React.Component<IEdgeProps> {
@@ -42,6 +43,9 @@ class Edge extends React.Component<IEdgeProps> {
     edgeHandleSize: 50,
     isSelected: false,
     rotateEdgeHandle: true,
+    onEdgeContextMenu: () => {
+      return;
+    },
   };
 
   static getTheta(pt1: any, pt2: any) {
@@ -606,6 +610,10 @@ class Edge extends React.Component<IEdgeProps> {
     return Edge.lineFunction(linePoints);
   }
 
+  handleContextMenu = (event: any) => {
+    this.props.onEdgeContextMenu(event, this.props.data);
+  };
+
   renderHandleText(data: any) {
     return (
       <text
@@ -656,6 +664,7 @@ class Edge extends React.Component<IEdgeProps> {
         className="edge-container"
         data-source={data.source}
         data-target={data.target}
+        onContextMenu={this.handleContextMenu}
       >
         <g className={className}>
           <path

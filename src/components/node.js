@@ -31,6 +31,7 @@ type INodeProps = {
   nodeSize?: number,
   onNodeMouseEnter: (event: any, data: any, hovered: boolean) => void,
   onNodeMouseLeave: (event: any, data: any) => void,
+  onNodeContextMenu: (event: any, data: any) => void,
   onNodeMove: (point: IPoint, id: string, shiftKey: boolean) => void,
   onNodeSelected: (
     data: any,
@@ -47,6 +48,7 @@ type INodeProps = {
     hovered: boolean
   ) => any,
   renderNodeText?: (data: any, id: string | number, isSelected: boolean) => any,
+  renderNodeHover?: (data: any, id: string | number) => any,
   isSelected: boolean,
   layoutEngine?: any,
   viewWrapperElem: HTMLDivElement,
@@ -75,6 +77,9 @@ class Node extends React.Component<INodeProps, INodeState> {
     onNodeMouseLeave: () => {
       return;
     },
+    onNodeContextMenu: () => {
+      return;
+    },
     onNodeMove: () => {
       return;
     },
@@ -83,6 +88,9 @@ class Node extends React.Component<INodeProps, INodeState> {
     },
     onNodeUpdate: () => {
       return;
+    },
+    renderNodeHover: () => {
+      return null;
     },
     centerNodeOnMove: true,
   };
@@ -255,6 +263,10 @@ class Node extends React.Component<INodeProps, INodeState> {
     this.props.onNodeMouseLeave(event, this.props.data);
   };
 
+  handleContextMenu = (event: any) => {
+    this.props.onNodeContextMenu(event, this.props.data);
+  };
+
   static getNodeTypeXlinkHref(data: INode, nodeTypes: any) {
     if (data.type && nodeTypes[data.type]) {
       return nodeTypes[data.type].shapeId;
@@ -360,7 +372,7 @@ class Node extends React.Component<INodeProps, INodeState> {
 
   render() {
     const { x, y, hovered, selected } = this.state;
-    const { opacity, id, data } = this.props;
+    const { opacity, id, data, renderNodeHover } = this.props;
     const className = GraphUtils.classNames('node', data.type, {
       hovered,
       selected,
@@ -371,6 +383,7 @@ class Node extends React.Component<INodeProps, INodeState> {
         className={className}
         onMouseOver={this.handleMouseOver}
         onMouseOut={this.handleMouseOut}
+        onContextMenu={this.handleContextMenu}
         id={id}
         ref={this.nodeRef}
         opacity={opacity}
@@ -379,6 +392,7 @@ class Node extends React.Component<INodeProps, INodeState> {
       >
         {this.renderShape()}
         {this.renderText()}
+        {hovered && renderNodeHover()}
       </g>
     );
   }

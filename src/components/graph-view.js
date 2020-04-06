@@ -1228,6 +1228,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       renderNodeText,
       nodeKey,
       maxTitleChars,
+      onContextMenuNode,
+      renderNodeHover,
     } = this.props;
 
     return (
@@ -1244,6 +1246,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         onNodeMove={this.handleNodeMove}
         onNodeUpdate={this.handleNodeUpdate}
         onNodeSelected={this.handleNodeSelected}
+        onNodeContextMenu={onContextMenuNode}
+        renderNodeHover={renderNodeHover}
         renderNode={renderNode}
         renderNodeText={renderNodeText}
         isSelected={this.state.selectedNodeObj.node === node}
@@ -1359,6 +1363,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         viewWrapperElem={this.viewWrapper.current}
         isSelected={this.isEdgeSelected(edge)}
         rotateEdgeHandle={this.props.rotateEdgeHandle}
+        onEdgeContextMenu={this.props.onContextMenuEdge}
       />
     );
   };

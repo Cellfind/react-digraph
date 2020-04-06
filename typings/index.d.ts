@@ -40,6 +40,7 @@ declare module '@cellfind/react-digraph' {
       id: string | number,
       isSelected: boolean
     ) => any;
+    renderNodeHover?: (data: any, id: string | number) => any,
     isSelected: boolean;
     layoutEngine?: any;
     viewWrapperElem: HTMLDivElement;
@@ -116,6 +117,9 @@ declare module '@cellfind/react-digraph' {
     onUndo?: () => void;
     onRedo?: () => void;
     onUpdateNode: (node: INode) => void;
+    onUnhandledKeydown?: (e: React.KeyboardEvent) => void,
+    onContextMenuNode?: (e: React.MouseEvent, data: INode) => void,
+    onContextMenuEdge?: (e: React.MouseEvent, data: IEdge) => void,
     renderBackground?: (gridSize?: number) => any;
     renderDefs?: () => any;
     renderDropShadowDef?: () => any;
@@ -138,6 +142,7 @@ declare module '@cellfind/react-digraph' {
       id: string | number,
       isSelected: boolean
     ) => any;
+    renderNodeHover?: (data: any, id: string | number) => any,
   };
 
   export type IGraphInput = {
@@ -145,7 +150,7 @@ declare module '@cellfind/react-digraph' {
     edges: IEdge[];
   };
 
-  export class BwdlTransformer extends Transformer {}
+  export class BwdlTransformer extends Transformer { }
 
   export class Transformer {
     /**
