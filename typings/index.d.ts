@@ -15,6 +15,13 @@ declare module '@cellfind/react-digraph' {
     y: number;
   };
 
+  export type IBBox = {
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  };
+
   export type INodeProps = {
     data: INode;
     id: string;
@@ -93,6 +100,9 @@ declare module '@cellfind/react-digraph' {
     nodeKey: string;
     nodes: any[];
     nodeSize?: number;
+    nodeHeight?: number,
+    nodeWidth?: number,
+    nodeSpacingMultiplier?: number,
     nodeSubtypes: any;
     nodeTypes: any;
     readOnly?: boolean;
@@ -103,6 +113,7 @@ declare module '@cellfind/react-digraph' {
     canCreateEdge?: (startNode?: INode, endNode?: INode) => boolean;
     canDeleteEdge?: (selected: any) => boolean;
     canDeleteNode?: (selected: any) => boolean;
+    onBackgroundClick?: (x: number, y: number, event: any) => void;
     canSwapEdge: (sourceNode: INode, targetNode: INode, edge: IEdge) => void;
     onCopySelected?: () => void;
     onCutSelected?: () => void;
@@ -142,6 +153,9 @@ declare module '@cellfind/react-digraph' {
       id: string | number,
       isSelected: boolean
     ) => any;
+    rotateEdgeHandle?: boolean;
+    centerNodeOnMove?: boolean;
+    initialBBox?: IBBox;
     renderNodeHover?: (data: any, id: string | number) => any,
   };
 

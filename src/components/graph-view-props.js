@@ -78,5 +78,5 @@ export type IGraphViewProps = {
   renderNodeHover?: (data: any, id: string | number) => any,
   rotateEdgeHandle?: boolean,
   centerNodeOnMove?: boolean,
-  initialBBox: IBBox,
+  initialBBox?: IBBox,
 };
