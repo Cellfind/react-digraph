@@ -392,7 +392,7 @@ class Node extends React.Component<INodeProps, INodeState> {
       >
         {this.renderShape()}
         {this.renderText()}
-        {hovered && renderNodeHover()}
+        {hovered && renderNodeHover(data, id)}
       </g>
     );
   }
