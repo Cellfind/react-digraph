@@ -157,7 +157,7 @@ class Bwdl extends React.Component<{}, IBwdlState> {
       <GraphView
         ref={el => (this.GraphView = el)}
         nodeKey={NODE_KEY}
-        readOnly={true}
+        readOnly={false}
         nodes={nodes}
         edges={edges}
         selected={selected}

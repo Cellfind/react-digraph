@@ -231,6 +231,36 @@ describe('GraphView component', () => {
         false
       );
     });
+
+    it('sets up a renderEdge call synchronously when source key = 0', () => {
+      const expectedEdge = {
+        source: 0,
+        target: 'b',
+      };
+
+      instance.syncRenderEdge(expectedEdge);
+      expect(instance.renderEdge).toHaveBeenCalledWith(
+        'edge-0-b',
+        'blah',
+        expectedEdge,
+        false
+      );
+    });
+
+    it('sets up a renderEdge call synchronously when target key = 0', () => {
+      const expectedEdge = {
+        source: 'a',
+        target: 0,
+      };
+
+      instance.syncRenderEdge(expectedEdge);
+      expect(instance.renderEdge).toHaveBeenCalledWith(
+        'edge-a-0',
+        'blah',
+        expectedEdge,
+        false
+      );
+    });
   });
 
   describe('asyncRenderEdge method', () => {
@@ -258,6 +288,34 @@ describe('GraphView component', () => {
       expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
       expect(instance.syncRenderEdge).toHaveBeenCalledWith(edge, false);
     });
+
+    it('renders asynchronously when source key = 0', () => {
+      jest.spyOn(instance, 'syncRenderEdge');
+      const edge = {
+        source: 0,
+        target: 'b',
+      };
+
+      instance.asyncRenderEdge(edge);
+
+      expect(instance.edgeTimeouts['edges-0-b']).toBeDefined();
+      expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+      expect(instance.syncRenderEdge).toHaveBeenCalledWith(edge, false);
+    });
+
+    it('renders asynchronously when target key = 0', () => {
+      jest.spyOn(instance, 'syncRenderEdge');
+      const edge = {
+        source: 'a',
+        target: 0,
+      };
+
+      instance.asyncRenderEdge(edge);
+
+      expect(instance.edgeTimeouts['edges-a-0']).toBeDefined();
+      expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+      expect(instance.syncRenderEdge).toHaveBeenCalledWith(edge, false);
+    });
   });
 
   describe('renderEdge method', () => {
@@ -278,6 +336,16 @@ describe('GraphView component', () => {
         target: 'b',
       };
 
+      const querySelectorResponse = undefined;
+
+      instance.viewWrapper = {
+        current: {
+          querySelector: jest.fn().mockImplementation(selector => {
+            return querySelectorResponse;
+          }),
+        },
+      };
+
       // using Date.getTime to make this a unique edge
       instance.renderEdge(`test-${new Date().getTime()}`, element, edge);
 
@@ -289,17 +357,23 @@ describe('GraphView component', () => {
       const container = document.createElement('g');
 
       container.id = 'test-container';
-      jest.spyOn(document, 'getElementById').mockReturnValue(container);
       const edge = {
         source: 'a',
         target: 'b',
+      };
+
+      instance.viewWrapper = {
+        current: {
+          querySelector: jest.fn().mockImplementation(selector => {
+            return container;
+          }),
+        },
       };
 
       instance.renderEdge('test', element, edge);
 
       expect(instance.entities.appendChild).not.toHaveBeenCalled();
       expect(ReactDOM.render).toHaveBeenCalledWith(element, container);
-      document.getElementById.mockRestore();
     });
   });
 
@@ -507,6 +581,16 @@ describe('GraphView component', () => {
     it('appends a node element into the entities element', () => {
       const element = document.createElement('g');
 
+      const querySelectorResponse = undefined;
+
+      instance.viewWrapper = {
+        current: {
+          querySelector: jest.fn().mockImplementation(selector => {
+            return querySelectorResponse;
+          }),
+        },
+      };
+
       instance.renderNode('test', element);
 
       expect(instance.entities.appendChild).toHaveBeenCalled();
@@ -517,12 +601,19 @@ describe('GraphView component', () => {
       const container = document.createElement('g');
 
       container.id = 'test-container';
-      jest.spyOn(document, 'getElementById').mockReturnValue(container);
+
+      instance.viewWrapper = {
+        current: {
+          querySelector: jest.fn().mockImplementation(selector => {
+            return container;
+          }),
+        },
+      };
+
       instance.renderNode('test', element);
 
       expect(instance.entities.appendChild).not.toHaveBeenCalled();
       expect(ReactDOM.render).toHaveBeenCalledWith(element, container);
-      document.getElementById.mockRestore();
     });
   });
 
@@ -803,6 +894,14 @@ describe('GraphView component', () => {
     });
 
     it('handles the zoom event when a node is not hovered nor an edge is being dragged', () => {
+      instance.viewWrapper = {
+        current: {
+          querySelector: jest.fn().mockImplementation(selector => {
+            return {};
+          }),
+        },
+      };
+
       instance.handleZoom(event);
       expect(instance.renderGraphControls).toHaveBeenCalled();
       expect(instance.dragEdge).not.toHaveBeenCalled();
@@ -827,6 +926,14 @@ describe('GraphView component', () => {
     });
 
     it('zooms when a node is hovered', () => {
+      instance.viewWrapper = {
+        current: {
+          querySelector: jest.fn().mockImplementation(selector => {
+            return {};
+          }),
+        },
+      };
+
       output.setState({
         hoveredNode: {},
       });
@@ -849,10 +956,7 @@ describe('GraphView component', () => {
       instance.selectedView = d3.select(document.createElement('g'));
       mouse = jest.fn().mockReturnValue([5, 15]);
       output.setProps({
-        nodes: [
-          { id: 'a', x: 5, y: 10 },
-          { id: 'b', x: 10, y: 20 },
-        ],
+        nodes: [{ id: 'a', x: 5, y: 10 }, { id: 'b', x: 10, y: 20 }],
       });
       output.setState({
         draggedEdge,

@@ -123,7 +123,7 @@ declare module '@cellfind/react-digraph' {
     onDeleteNode: (selected: any, nodeId: string, nodes: any[]) => void;
     onPasteSelected?: () => void;
     onSelectEdge: (selectedEdge: IEdge) => void;
-    onSelectNode: (node: INode | null) => void;
+    onSelectNode: (node: INode | null, event: any) => void;
     onSwapEdge: (sourceNode: INode, targetNode: INode, edge: IEdge) => void;
     onUndo?: () => void;
     onRedo?: () => void;
@@ -182,7 +182,7 @@ declare module '@cellfind/react-digraph' {
     static revert(graphInput: IGraphInput): any;
   }
 
-  export type LayoutEngineType = 'None' | 'SnapToGrid' | 'VerticalTree';
+  export type LayoutEngineType = 'None' | 'SnapToGrid' | 'VerticalTree' | 'HorizontalTree';
 
   type IGraphViewState = {
     viewTransform?: IViewTransform,

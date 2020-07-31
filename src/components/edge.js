@@ -6,6 +6,8 @@ import { Point2D, Matrix2D } from 'kld-affine';
 import { Intersection } from 'kld-intersections';
 import GraphUtils from '../utilities/graph-util';
 import { type INode } from './node';
+import { EdgeHandleText } from './edge-handle-text';
+import { EdgeLabelText } from './edge-label-text';
 
 export type IEdge = {
   source: string,
@@ -69,22 +71,31 @@ class Edge extends React.Component<IEdgeProps> {
       })(srcTrgDataArray);
   }
 
-  static getArrowSize(
-    viewWrapperElem: HTMLDivElement | HTMLDocument = document
-  ) {
+  static getArrowSize(viewWrapperElem: HTMLDivElement) {
     const defEndArrowElement: any = viewWrapperElem.querySelector(
       `defs>marker>.arrow`
     );
 
-    return defEndArrowElement.getBoundingClientRect();
+    const arrowRect = defEndArrowElement.getBoundingClientRect();
+    const size = {
+      bottom: arrowRect.bottom,
+      top: arrowRect.top,
+      // Firefox doesn't calculate width and height, so we need to pull
+      // from the attributes.
+      height: arrowRect.height || defEndArrowElement.getAttribute('height'),
+      width: arrowRect.width || defEndArrowElement.getAttribute('width'),
+      left: arrowRect.left,
+      right: arrowRect.right,
+      y: arrowRect.y,
+      x: arrowRect.x,
+    };
+
+    return size;
   }
 
-  static getEdgePathElement(
-    edge: IEdge,
-    viewWrapperElem: HTMLDivElement | HTMLDocument = document
-  ) {
+  static getEdgePathElement(edge: IEdge, viewWrapperElem: HTMLDivElement) {
     return viewWrapperElem.querySelector(
-      `#edge-${edge.source}-${edge.target}-container>.edge-container>.edge>.edge-path`
+      `[id='edge-${edge.source}-${edge.target}-container']>.edge-container>.edge>.edge-path`
     );
   }
 
@@ -135,7 +146,7 @@ class Edge extends React.Component<IEdgeProps> {
     src: any,
     trg: any,
     includesArrow: boolean,
-    viewWrapperElem: HTMLDivElement | HTMLDocument = document
+    viewWrapperElem: HTMLDivElement
   ) {
     const response = Edge.getDefaultIntersectResponse();
     const arrowSize = Edge.getArrowSize(viewWrapperElem);
@@ -235,15 +246,20 @@ class Edge extends React.Component<IEdgeProps> {
     src: any,
     trg: any,
     includesArrow?: boolean = true,
-    viewWrapperElem: HTMLDivElement | HTMLDocument = document
+    viewWrapperElem: HTMLDivElement
   ) {
     const response = Edge.getDefaultIntersectResponse();
     const arrowSize = Edge.getArrowSize(viewWrapperElem);
     // get the rectangular area around path
     const clientRect = defSvgPathElement.getBoundingClientRect();
-
-    const w = clientRect.width;
-    const h = clientRect.height;
+    // getBoundingClientRect doesn't work on Firefox.
+    // We do have the width and height on the parent <symbol> element for the node,
+    // so we'll use that.
+    const w =
+      clientRect.width || defSvgPathElement.parentElement.getAttribute('width');
+    const h =
+      clientRect.height ||
+      defSvgPathElement.parentElement.getAttribute('height');
     const trgX = trg.x || 0;
     const trgY = trg.y || 0;
     const srcX = src.x || 0;
@@ -334,7 +350,7 @@ class Edge extends React.Component<IEdgeProps> {
     src: any,
     trg: any,
     includesArrow?: boolean = true,
-    viewWrapperElem: HTMLDivElement | HTMLDocument = document
+    viewWrapperElem: HTMLDivElement
   ) {
     const response = Edge.getDefaultIntersectResponse();
     const arrowSize = Edge.getArrowSize(viewWrapperElem);
@@ -394,18 +410,22 @@ class Edge extends React.Component<IEdgeProps> {
     trg: any,
     nodeKey: string,
     includesArrow?: boolean = true,
-    viewWrapperElem?: HTMLDivElement = document
+    viewWrapperElem: React.RefObject<HTMLDivElement>
   ) {
     let response = Edge.getDefaultIntersectResponse();
 
-    if (!trg[nodeKey]) {
+    if (trg[nodeKey] == null) {
       return response;
     }
 
     // Note: document.getElementById is by far the fastest way to get a node.
     // compare 2.82ms for querySelector('#node-a2 use.node') vs
     // 0.31ms and 99us for document.getElementById()
-    const nodeElem = document.getElementById(`node-${trg[nodeKey]}`);
+    // Although it doesn't allow multiple graphs.
+    // We can use viewWrapperElem to scope the querySelector to a smaller set of elements to improve the speed
+    const nodeElem = viewWrapperElem.querySelector(
+      `[id='node-${trg[nodeKey]}']`
+    );
 
     if (!nodeElem) {
       return response;
@@ -533,7 +553,7 @@ class Edge extends React.Component<IEdgeProps> {
     return `translate(${offset}, ${offset})`;
   };
 
-  getEdgeHandleRotation = (negate: any = false) => {
+  getEdgeHandleRotation = (negate: any = false): [string, boolean] => {
     let rotated = false;
     const src = this.props.sourceNode;
     const trg = this.props.targetNode;
@@ -653,7 +673,7 @@ class Edge extends React.Component<IEdgeProps> {
       return null;
     }
 
-    const id = `${data.source || ''}_${data.target}`;
+    const id = `${data.source != null ? data.source : ''}_${data.target}`;
     const className = GraphUtils.classNames('edge', {
       selected: this.props.isSelected,
     });
@@ -678,8 +698,19 @@ class Edge extends React.Component<IEdgeProps> {
             transform={edgeHandleTransformation}
             style={{ transform: edgeHandleTransformation }}
           />
-          {data.handleText && this.renderHandleText(data)}
-          {data.label_from && data.label_to && this.renderLabelText(data)}
+          {data.handleText && (
+            <EdgeHandleText
+              handleText={data.handleText}
+              edgeHandleTranslation={this.getEdgeHandleTranslation()}
+            />
+          )}
+          {data.label_from && data.label_to && (
+            <EdgeLabelText
+              data={data}
+              edgeHandleRotation={this.getEdgeHandleRotation()}
+              edgeHandleTranslation={this.getEdgeHandleTranslation()}
+            />
+          )}
         </g>
         <g className="edge-mouse-handler">
           <title>{data.handleTooltipText}</title>

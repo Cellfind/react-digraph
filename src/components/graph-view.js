@@ -48,6 +48,7 @@ type IGraphViewState = {
 class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   static defaultProps = {
     canCreateEdge: (startNode?: INode, endNode?: INode) => true,
+    canSwapEdge: () => true,
     canDeleteEdge: () => true,
     canDeleteNode: () => true,
     edgeArrowSize: 8,
@@ -171,9 +172,16 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   componentDidMount() {
     const { initialBBox, zoomDelay, minZoom, maxZoom } = this.props;
 
-    // TODO: can we target the element rather than the document?
-    document.addEventListener('keydown', this.handleWrapperKeydown);
-    document.addEventListener('click', this.handleDocumentClick);
+    if (this.viewWrapper.current) {
+      this.viewWrapper.current.addEventListener(
+        'keydown',
+        this.handleWrapperKeydown
+      );
+      this.viewWrapper.current.addEventListener(
+        'click',
+        this.handleDocumentClick
+      );
+    }
 
     this.zoom = d3
       .zoom()
@@ -191,6 +199,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       .on('touchstart', this.containZoom)
       .on('touchmove', this.containZoom)
       .on('click', this.handleSvgClicked) // handle element click in the element components
+      .on('contextmenu', this.handleContextmenu)
       .select('svg')
       .call(this.zoom);
 
@@ -215,8 +224,14 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   }
 
   componentWillUnmount() {
-    document.removeEventListener('keydown', this.handleWrapperKeydown);
-    document.removeEventListener('click', this.handleDocumentClick);
+    this.viewWrapper.current.removeEventListener(
+      'keydown',
+      this.handleWrapperKeydown
+    );
+    this.viewWrapper.current.removeEventListener(
+      'click',
+      this.handleDocumentClick
+    );
   }
 
   shouldComponentUpdate(
@@ -291,7 +306,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   getNodeById(id: string | null, nodesMap: any | null): INodeMapNode | null {
     const nodesMapVar = nodesMap || this.state.nodesMap;
 
-    return nodesMapVar ? nodesMapVar[`key-${id || ''}`] : null;
+    return nodesMapVar ? nodesMapVar[`key-${id != null ? id : ''}`] : null;
   }
 
   getEdgeBySourceTarget(source: string, target: string): IEdge | null {
@@ -392,7 +407,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       GraphUtils.yieldingLoop(edges.length, 50, i => {
         edge = edges[i];
 
-        if (!edge.source || !edge.target) {
+        if (edge.source == null || !edge.target == null) {
           return;
         }
 
@@ -421,8 +436,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
       // Check for deletions
       if (
-        !edge.source ||
-        !edge.target ||
+        edge.source == null ||
+        edge.target == null ||
         !edgesMap[`${edge.source}_${edge.target}`]
       ) {
         // remove edge
@@ -439,11 +454,14 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   }
 
   canSwap(sourceNode: INode, hoveredNode: INode | null, swapEdge: any) {
+    const { canSwapEdge } = this.props;
+
     return (
       hoveredNode &&
       sourceNode !== hoveredNode &&
       (swapEdge.source !== sourceNode[this.props.nodeKey] ||
-        swapEdge.target !== hoveredNode[this.props.nodeKey])
+        swapEdge.target !== hoveredNode[this.props.nodeKey]) &&
+      canSwapEdge(sourceNode, hoveredNode, swapEdge)
     );
   }
 
@@ -471,7 +489,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   deleteEdge(selectedEdge: IEdge) {
     const { edges } = this.state;
 
-    if (!selectedEdge.source || !selectedEdge.target) {
+    if (selectedEdge.source == null || selectedEdge.target == null) {
       return;
     }
 
@@ -482,7 +500,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       );
     });
 
-    if (selectedEdge.source && selectedEdge.target) {
+    if (selectedEdge.source != null && selectedEdge.target != null) {
       this.deleteEdgeBySourceTarget(selectedEdge.source, selectedEdge.target);
     }
 
@@ -492,7 +510,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     });
 
     // remove from UI
-    if (selectedEdge.source && selectedEdge.target) {
+    if (selectedEdge.source != null && selectedEdge.target != null) {
       // remove extra custom containers just in case.
       GraphUtils.removeElementFromDom(
         `edge-${selectedEdge.source}-${selectedEdge.target}-custom-container`
@@ -513,10 +531,14 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       return;
     }
 
-    if (!selected.source && canDeleteNode && canDeleteNode(selected)) {
+    if (selected.source == null && canDeleteNode && canDeleteNode(selected)) {
       // node
       this.deleteNode(selected);
-    } else if (selected.source && canDeleteEdge && canDeleteEdge(selected)) {
+    } else if (
+      selected.source != null &&
+      canDeleteEdge &&
+      canDeleteEdge(selected)
+    ) {
       // edge
       this.deleteEdge(selected);
     }
@@ -609,10 +631,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       focused: true,
     };
 
-    if (source && target) {
+    if (source != null && target != null) {
       const edge: IEdge | null = this.getEdgeBySourceTarget(source, target);
 
-      if (!edge) {
+      if (edge == null) {
         return;
       }
 
@@ -639,6 +661,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       onSelectNode,
       readOnly,
       onCreateNode,
+      onPasteSelected,
     } = this.props;
 
     if (this.isPartOfEdge(d3.event.target)) {
@@ -667,6 +690,20 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       const previousSelection =
         (this.state.selectedNodeObj && this.state.selectedNodeObj.node) || null;
 
+      // Clicking with ctrl will paste
+      if (
+        onPasteSelected &&
+        !readOnly &&
+        d3.event.ctrlKey &&
+        previousSelection
+      ) {
+        const xycoords = d3.mouse(d3.event.target);
+
+        onPasteSelected(previousSelection, xycoords);
+
+        return;
+      }
+
       // de-select the current selection
       this.setState({
         selectedNodeObj: null,
@@ -684,6 +721,16 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
         onCreateNode(xycoords[0], xycoords[1], d3.event);
       }
+    }
+  };
+
+  handleContextmenu = () => {
+    const { onContextMenu } = this.props;
+
+    if (typeof onContextMenu === 'function') {
+      const xycoords = d3.mouse(d3.event.target);
+
+      onContextMenu(xycoords[0], xycoords[1], d3.event);
     }
   };
 
@@ -890,7 +937,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
     const xycoords = d3.mouse(eventTarget);
 
-    if (!edge.target) {
+    if (edge.target == null) {
       return false;
     }
 
@@ -1298,9 +1345,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     }
 
     const containerId = `${id}-container`;
-    let nodeContainer: HTMLElement | Element | null = document.getElementById(
-      containerId
-    );
+    let nodeContainer:
+      | HTMLElement
+      | Element
+      | null = this.viewWrapper.current.querySelector(`[id='${containerId}']`);
 
     if (!nodeContainer) {
       nodeContainer = document.createElementNS(
@@ -1382,14 +1430,20 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     const customContainerId = `${id}-custom-container`;
     const { draggedEdge } = this.state;
     const { afterRenderEdge } = this.props;
-    let edgeContainer = document.getElementById(containerId);
+    let edgeContainer = this.viewWrapper.current.querySelector(
+      `[id='${containerId}']`
+    );
 
     if (nodeMoving && edgeContainer) {
       edgeContainer.style.display = 'none';
       containerId = `${id}-custom-container`;
-      edgeContainer = document.getElementById(containerId);
+      edgeContainer = this.viewWrapper.current.querySelector(
+        `[id='${containerId}']`
+      );
     } else if (edgeContainer) {
-      const customContainer = document.getElementById(customContainerId);
+      const customContainer = this.viewWrapper.current.querySelector(
+        `[id='${customContainerId}']`
+      );
 
       edgeContainer.style.display = '';
 
@@ -1427,7 +1481,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   };
 
   asyncRenderEdge = (edge: IEdge, nodeMoving: boolean = false) => {
-    if (!edge.source || !edge.target) {
+    if (edge.source == null || edge.target == null) {
       return;
     }
 
@@ -1440,12 +1494,13 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
   };
 
   syncRenderEdge(edge: IEdge | any, nodeMoving: boolean = false) {
-    if (!edge.source) {
+    if (edge.source == null) {
       return;
     }
 
     // We have to use the 'custom' id when we're drawing a new node
-    const idVar = edge.target ? `${edge.source}-${edge.target}` : 'custom';
+    const idVar =
+      edge.target != null ? `${edge.source}-${edge.target}` : 'custom';
     const id = `edge-${idVar}`;
     const element = this.getEdgeComponent(edge);
 
@@ -1478,8 +1533,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       return;
     }
 
-    const graphControlsWrapper = this.viewWrapper.current.ownerDocument.getElementById(
-      'react-digraph-graph-controls-wrapper'
+    const graphControlsWrapper = this.viewWrapper.current.querySelector(
+      '#react-digraph-graph-controls-wrapper'
     );
 
     if (!graphControlsWrapper) {
@@ -1591,7 +1646,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       return;
     }
 
-    const node = this.entities.querySelector(`#node-${id}-container`);
+    const node = this.entities.querySelector(`[id='node-${id}-container']`);
 
     this.panToEntity(node, zoom);
   }
@@ -1602,7 +1657,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     }
 
     const edge = this.entities.querySelector(
-      `#edge-${source}-${target}-container`
+      `[id='edge-${source}-${target}-container']`
     );
 
     this.panToEntity(edge, zoom);

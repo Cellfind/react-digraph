@@ -5,6 +5,7 @@ import * as React from 'react';
 import { shallow } from 'enzyme';
 
 import Edge from '../../src/components/edge';
+import { EdgeHandleText } from '../../src/components/edge-handle-text';
 import { Point2D } from 'kld-intersections';
 
 describe('Edge component', () => {
@@ -79,13 +80,12 @@ describe('Edge component', () => {
         'translate(55, 110) rotate(63.43494882292201) translate(-25, -25)'
       );
 
-      const handleText = output.find('text').first();
+      const handleText = output.find(EdgeHandleText);
 
-      expect(handleText.props().className).toEqual('edge-text');
-      expect(handleText.props().textAnchor).toEqual('middle');
-      expect(handleText.props().alignmentBaseline).toEqual('central');
-      expect(handleText.props().transform).toEqual('translate(55, 110)');
-      expect(handleText.text()).toEqual('test');
+      expect(handleText.props().handleText).toEqual('test');
+      expect(handleText.props().edgeHandleTranslation).toEqual(
+        'translate(55, 110)'
+      );
 
       const gMouseHandler = output
         .children()
@@ -101,30 +101,6 @@ describe('Edge component', () => {
       expect(pathMouseHandler.props()['data-source']).toEqual('foo');
       expect(pathMouseHandler.props()['data-target']).toEqual('bar');
       expect(pathMouseHandler.props().d).toEqual('M10,20L100,200');
-    });
-
-    it('does not render handleText when there is none', () => {
-      output.setProps({
-        data: {
-          ...data,
-          handleText: undefined,
-        },
-      });
-      const handleText = output.find('text');
-
-      expect(handleText.length).toEqual(0);
-    });
-  });
-
-  describe('renderHandleText method', () => {
-    it('returns a text element with the handleText inside', () => {
-      const expectedData = {
-        handleText: 'Fake',
-      };
-      const handleText = output.instance().renderHandleText(expectedData);
-
-      expect(handleText.props.className).toEqual('edge-text');
-      expect(handleText.props.children).toEqual('Fake');
     });
   });
 
@@ -276,18 +252,20 @@ describe('Edge component', () => {
         return rect;
       });
 
-      document.querySelector = jest.fn().mockImplementation(selector => {
-        return {
-          getBoundingClientRect: boundingClientRectMock,
-        };
-      });
+      const viewWrapperElem = {
+        querySelector: jest.fn().mockImplementation(selector => {
+          return {
+            getBoundingClientRect: boundingClientRectMock,
+          };
+        }),
+      };
 
-      const size = Edge.getArrowSize();
+      const size = Edge.getArrowSize(viewWrapperElem);
 
-      expect(document.querySelector).toHaveBeenCalledWith('defs>marker>.arrow');
+      expect(viewWrapperElem.querySelector).toHaveBeenCalledWith(
+        'defs>marker>.arrow'
+      );
       expect(size).toEqual(rect);
-
-      document.querySelector.mockRestore();
     });
   });
 
@@ -304,23 +282,24 @@ describe('Edge component', () => {
       Edge.getEdgePathElement(fakeEdge, viewWrapperElem);
 
       expect(viewWrapperElem.querySelector).toHaveBeenCalledWith(
-        '#edge-fake1-fake2-container>.edge-container>.edge>.edge-path'
+        "[id='edge-fake1-fake2-container']>.edge-container>.edge>.edge-path"
       );
     });
 
     it('returns the edge element from the document', () => {
-      document.querySelector = jest.fn();
+      const viewWrapperElem = {
+        querySelector: jest.fn(),
+      };
       const fakeEdge = {
         source: 'fake1',
         target: 'fake2',
       };
 
-      Edge.getEdgePathElement(fakeEdge);
+      Edge.getEdgePathElement(fakeEdge, viewWrapperElem);
 
-      expect(document.querySelector).toHaveBeenCalledWith(
-        '#edge-fake1-fake2-container>.edge-container>.edge>.edge-path'
+      expect(viewWrapperElem.querySelector).toHaveBeenCalledWith(
+        "[id='edge-fake1-fake2-container']>.edge-container>.edge>.edge-path"
       );
-      document.querySelector.mockRestore();
     });
   });
 
@@ -768,7 +747,7 @@ describe('Edge component', () => {
         }),
       };
 
-      document.getElementById = jest.fn().mockImplementation(() => {
+      viewWrapperElem.querySelector = jest.fn().mockImplementation(() => {
         return node;
       });
 
@@ -782,10 +761,10 @@ describe('Edge component', () => {
       );
       const expected = defaultExpected;
 
-      expect(document.getElementById).toHaveBeenCalledWith('node-test2');
+      expect(viewWrapperElem.querySelector).toHaveBeenCalledWith(
+        "[id='node-test2']"
+      );
       expect(JSON.stringify(result)).toEqual(JSON.stringify(expected));
-
-      document.getElementById.mockRestore();
     });
 
     it('returns a default response when there is no xlinkHref', () => {
@@ -800,7 +779,7 @@ describe('Edge component', () => {
         }),
       };
 
-      document.getElementById = jest.fn().mockImplementation(() => {
+      viewWrapperElem.querySelector = jest.fn().mockImplementation(() => {
         return node;
       });
 
@@ -814,14 +793,14 @@ describe('Edge component', () => {
       );
       const expected = defaultExpected;
 
-      expect(document.getElementById).toHaveBeenCalledWith('node-test2');
+      expect(viewWrapperElem.querySelector).toHaveBeenCalledWith(
+        "[id='node-test2']"
+      );
       expect(trgNode.getAttributeNS).toHaveBeenCalledWith(
         'http://www.w3.org/1999/xlink',
         'href'
       );
       expect(JSON.stringify(result)).toEqual(JSON.stringify(expected));
-
-      document.getElementById.mockRestore();
     });
 
     it('gets a response for a rect element', () => {
@@ -836,7 +815,15 @@ describe('Edge component', () => {
         }),
       };
 
-      document.getElementById = jest.fn().mockImplementation(() => {
+      let callNumber = 0;
+
+      viewWrapperElem.querySelector = jest.fn().mockImplementation(() => {
+        if (callNumber === 1) {
+          return rectElement;
+        }
+
+        callNumber = 1;
+
         return node;
       });
 
@@ -858,8 +845,6 @@ describe('Edge component', () => {
       };
 
       expect(JSON.stringify(result)).toEqual(JSON.stringify(expected));
-
-      document.getElementById.mockRestore();
     });
   });
 });
