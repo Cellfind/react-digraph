@@ -6,8 +6,7 @@
 
 import * as React from 'react';
 
-import {
-  GraphViewFast,
+import GraphViewFast, {
   type IEdgeType as IEdge,
   type INodeType as INode,
   type LayoutEngineType,
@@ -23,7 +22,7 @@ import GraphConfig, {
   SPECIAL_EDGE_TYPE,
   SPECIAL_TYPE,
   SKINNY_TYPE,
-} from './graph-config'; // Configures node/edge types
+} from '../graph-config'; // Configures node/edge types
 
 type IGraph = {
   nodes: INode[],
