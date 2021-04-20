@@ -1,6 +1,10 @@
 // @flow
+import * as React from 'react';
+import { shallow } from 'enzyme';
+import GraphView from '../../src/components/graph-view';
 
 import GraphUtils from '../../src/utilities/graph-util';
+import { start } from 'live-server';
 
 describe('GraphUtils class', () => {
   describe('getNodesMap method', () => {
@@ -130,7 +134,7 @@ describe('GraphUtils class', () => {
         },
       };
 
-      jest.spyOn(document, 'getElementById').mockReturnValue(fakeElement);
+      jest.spyOn(document, 'querySelector').mockReturnValue(fakeElement);
       const result = GraphUtils.removeElementFromDom('fake');
 
       expect(fakeElement.parentNode.removeChild).toHaveBeenCalledWith(
@@ -140,7 +144,7 @@ describe('GraphUtils class', () => {
     });
 
     it("does nothing when it can't find the element", () => {
-      jest.spyOn(document, 'getElementById').mockReturnValue(undefined);
+      jest.spyOn(document, 'querySelector').mockReturnValue(undefined);
       const result = GraphUtils.removeElementFromDom('fake');
 
       expect(result).toEqual(false);
@@ -148,9 +152,17 @@ describe('GraphUtils class', () => {
   });
 
   describe('findParent method', () => {
+    const isNotSVGGraphSelector = selector => {
+      if (selector === 'svg.graph') {
+        return false;
+      }
+
+      return true;
+    };
+
     it('returns the element if an element matches a selector', () => {
       const element = {
-        matches: jest.fn().mockReturnValue(true),
+        matches: isNotSVGGraphSelector,
       };
       const parent = GraphUtils.findParent(element, 'fake');
 
@@ -159,8 +171,9 @@ describe('GraphUtils class', () => {
 
     it('returns the parent if an element contains a parentNode property', () => {
       const element = {
+        matches: jest.fn().mockReturnValue(false),
         parentNode: {
-          matches: jest.fn().mockReturnValue(true),
+          matches: isNotSVGGraphSelector,
         },
       };
       const parent = GraphUtils.findParent(element, 'fake');
@@ -170,8 +183,9 @@ describe('GraphUtils class', () => {
 
     it('returns null when there is no match', () => {
       const element = {
+        matches: jest.fn().mockReturnValue(false),
         parentNode: {
-          matches: jest.fn().mockReturnValue(false),
+          matches: selector => !isNotSVGGraphSelector(selector),
         },
       };
       const parent = GraphUtils.findParent(element, 'fake');
@@ -200,6 +214,20 @@ describe('GraphUtils class', () => {
       });
 
       expect(result).toEqual('test hello');
+    });
+  });
+
+  describe('findNodesWithinArea', () => {
+    it('findNodes', () => {
+      const startPoint = { x: 0, y: 0 };
+      const endPoint = { x: 100, y: 100 };
+      const edges = [{ source: 'a', target: 'b' }];
+      const nodes = [{ id: 'a', x: 1, y: 1 }, { id: 'b', x: 2, y: 2 }, { id: 'c' }];
+      const nodeKey = 'id';
+
+      const actual = GraphUtils.findNodesWithinArea(startPoint, endPoint, nodes, nodeKey);
+
+      expect(actual.size).toEqual(2);
     });
   });
 

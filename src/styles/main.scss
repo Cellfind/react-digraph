@@ -5,6 +5,7 @@ $light-color: white;
 $dark-color: black;
 $light-grey: lightgrey;
 $background-color: #f9f9f9;
+$button-size: 31px;
 
 .view-wrapper {
   height: 100%;
@@ -74,6 +75,12 @@ $background-color: #f9f9f9;
 
       cursor: pointer;
       user-select: none;
+
+      &.edge-label-text {
+        font-size: 11px; 
+        stroke: none;
+        fill: black;
+      }
     }
 
     &.selected {
@@ -85,8 +92,6 @@ $background-color: #f9f9f9;
         stroke: $light-color;
       }
     }
-
-
   }
 
   .edge-mouse-handler {
@@ -106,24 +111,22 @@ $background-color: #f9f9f9;
     position: absolute;
     bottom: 30px;
     left: 15px;
-    z-index: 100;
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: auto auto auto;
     grid-gap: 15px;
     align-items: center;
     user-select: none;
 
     > .slider-wrapper {
-      background-color: white;
+      background-color: $light-color;
       color: $primary-color;
-      border: solid 1px lightgray;
+      border: solid 1px $light-grey;
       padding: 6.5px;
       border-radius: 2px;
 
       > span {
         display: inline-block;
-        vertical-align: top;
-        margin-top: 4px;
+        vertical-align: middle;
       }
 
       > .slider {
@@ -131,19 +134,24 @@ $background-color: #f9f9f9;
         margin-left: 4px;
         margin-right: 4px;
         cursor: pointer;
+        vertical-align: middle;
       }
     }
 
-    > .slider-button {
-      background-color: white;
+    .slider-button {
+      background-color: $light-color;
       fill: $primary-color;
-      border: solid 1px lightgray;
+      border: solid 1px $light-grey;
       outline: none;
-      width: 31px;
-      height: 31px;
+      width: $button-size;
+      height: $button-size;
       border-radius: 2px;
       cursor: pointer;
       margin: 0;
+
+      > svg {
+        vertical-align: middle;
+      }
     }
   }
 

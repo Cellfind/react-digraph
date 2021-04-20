@@ -81,11 +81,16 @@ declare module '@cellfind/react-digraph' {
     viewWrapperElem: HTMLDivElement;
   };
 
+  export type SelectionT = { 
+    nodes: Map<string, INode> | null, 
+    edges: Map<string, INode> | null 
+  };
+
   export const Edge: React.Component<IEdgeProps>;
 
   export type IGraphViewProps = {
+    allowMultiselect?: boolean;
     backgroundFillId?: string;
-    centerNodeOnMove?: boolean;
     edges: any[];
     edgeArrowSize?: number;
     edgeHandleSize?: number;
@@ -106,29 +111,48 @@ declare module '@cellfind/react-digraph' {
     nodeSubtypes: any;
     nodeTypes: any;
     readOnly?: boolean;
-    selected: any;
+    selected?: null | SelectionT;
     showGraphControls?: boolean;
     zoomDelay?: number;
     zoomDur?: number;
     canCreateEdge?: (startNode?: INode, endNode?: INode) => boolean;
-    canDeleteEdge?: (selected: any) => boolean;
-    canDeleteNode?: (selected: any) => boolean;
+    /*
+    canDeleteEdge?: (selected: any) => boolean; -> changed to more generic - CanDeleteSelected
+    canDeleteNode?: (selected: any) => boolean; -> changed to more generic - CanDeleteSelected
+    
+    onDeleteEdge: (selectedEdge: IEdge, edges: IEdge[]) => void; -> changed to more generic - onDeleteSelected
+    onDeleteNode: (selected: any, nodeId: string, nodes: any[]) => void; -> changed to more generic - onDeleteSelected
+
+    onPasteSelected?: () => void; -> Added variables
+
+    onSelectEdge: (selectedEdge: IEdge) => void; -> changed to more generic - onSelect
+    onSelectNode: (node: INode | null, event: any) => void; -> changed to more generic - onSelect
+    
+    onUpdateNode: (node: INode) => void; -> changed variables/implementation
+    onUnhandledKeydown?: (e: React.KeyboardEvent) => void,
+    */
+    canDeleteSelected?: (selected: SelectionT) => boolean;
+    canSwapEdge?: (
+      sourceNode: INode,
+      hoveredNode: INode | null,
+      swapEdge: IEdge
+    ) => boolean;
     onBackgroundClick?: (x: number, y: number, event: any) => void;
-    canSwapEdge: (sourceNode: INode, targetNode: INode, edge: IEdge) => void;
     onCopySelected?: () => void;
     onCutSelected?: () => void;
-    onCreateEdge: (sourceNode: INode, targetNode: INode) => void;
-    onCreateNode: (x: number, y: number, event: any) => void;
-    onDeleteEdge: (selectedEdge: IEdge, edges: IEdge[]) => void;
-    onDeleteNode: (selected: any, nodeId: string, nodes: any[]) => void;
-    onPasteSelected?: () => void;
-    onSelectEdge: (selectedEdge: IEdge) => void;
-    onSelectNode: (node: INode | null, event: any) => void;
-    onSwapEdge: (sourceNode: INode, targetNode: INode, edge: IEdge) => void;
+    onCreateEdge?: (sourceNode: INode, targetNode: INode) => void;
+    onCreateNode?: (x: number, y: number, event: any) => void;
+    onDeleteSelected?: (selected: SelectionT) => void;
+    onPasteSelected?: (
+      selected?: SelectionT | null,
+      xyCoords?: IPoint
+    ) => void,
+    onSelect?: (selected: SelectionT, event?: any) => void;
+    onSwapEdge?: (sourceNode: INode, targetNode: INode, edge: IEdge) => void;
     onUndo?: () => void;
     onRedo?: () => void;
-    onUpdateNode: (node: INode) => void;
-    onUnhandledKeydown?: (e: React.KeyboardEvent) => void,
+    onUpdateNode?: (node: INode, updatedNodes?: Map<string, INode> | null) => void;
+    onUnhandledKeydown?: (e: React.KeyboardEvent) => void;
     onContextMenuNode?: (e: React.MouseEvent, data: INode) => void,
     onContextMenuEdge?: (e: React.MouseEvent, data: IEdge) => void,
     renderBackground?: (gridSize?: number) => any;
@@ -218,7 +242,7 @@ declare module '@cellfind/react-digraph' {
     view: any;
     graphControls: any;
     layoutEngine: any;
-    panToNode: (id: string, zoom?: boolean = false) => void;
+    panToNode: (id: string, zoom?: boolean) => void;
     panToEdge: (source: string, target: string, zoom?: boolean) => void;
   }
 
@@ -255,7 +279,7 @@ declare module '@cellfind/react-digraph' {
 
     static removeElementFromDom(id: string): boolean;
 
-    static findParent(element: Element, selector: string): Element | null;
+    static findParent(element: Element, selector: string, stopAtSelector?: string): Element | null;
 
     static classNames(...args: any[]): string;
 

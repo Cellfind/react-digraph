@@ -29,6 +29,7 @@ describe('GraphView component', () => {
   let onUpdateNode;
   let onSwapEdge;
   let onSelectEdge;
+  let onUndo;
   let instance;
   let nodeKey;
 
@@ -48,6 +49,7 @@ describe('GraphView component', () => {
     onUpdateNode = jest.fn();
     onSwapEdge = jest.fn();
     onSelectEdge = jest.fn();
+    onUndo = jest.fn();
     ReactDOM.render = jest.fn();
 
     jest.spyOn(document, 'querySelector').mockReturnValue({
@@ -74,6 +76,7 @@ describe('GraphView component', () => {
         onCreateEdge={onCreateEdge}
         onUpdateNode={onUpdateNode}
         onSwapEdge={onSwapEdge}
+        onUndo={onUndo}
       />
     );
     instance = output.instance();
@@ -94,11 +97,11 @@ describe('GraphView component', () => {
       expect(defs.length).toEqual(1);
       expect(defs.props().edgeArrowSize).toEqual(8);
       expect(defs.props().gridSpacing).toEqual(36);
-      expect(defs.props().gridDotSize).toEqual(2);
+      expect(defs.props().gridDotSize).toEqual(undefined);
       expect(defs.props().nodeTypes).toEqual(nodeTypes);
       expect(defs.props().nodeSubtypes).toEqual(nodeSubtypes);
       expect(defs.props().edgeTypes).toEqual(edgeTypes);
-      expect(defs.props().renderDefs).toBeDefined();
+      expect(defs.props().renderDefs).not.toBeDefined();
 
       const view = graph.find('.view');
       const entities = view.find('.entities');
@@ -127,6 +130,7 @@ describe('GraphView component', () => {
       jest
         .spyOn(document, 'getElementById')
         .mockReturnValue(graphControlsWrapper);
+      instance.graphControlsWrapper = graphControlsWrapper;
     });
 
     afterEach(() => {
@@ -146,6 +150,9 @@ describe('GraphView component', () => {
     });
 
     it('uses ReactDOM.render to async render the GraphControls', () => {
+      output.setProps({
+        showGraphControls: true,
+      });
       output.setState({
         viewTransform: {
           k: 0.6,
@@ -400,17 +407,24 @@ describe('GraphView component', () => {
       expect(result.props.targetNode).toEqual(nodes[1]);
     });
 
-    it('handles missing nodes', () => {
+    it('returns null when sourceNode is not found', () => {
       const edge = {
-        source: 'a',
+        source: 'fake',
         target: 'b',
       };
       const result = instance.getEdgeComponent(edge);
 
-      expect(result.type.prototype.constructor.name).toEqual('Edge');
-      expect(result.props.data).toEqual(edge);
-      expect(result.props.sourceNode).toEqual(null);
-      expect(result.props.targetNode).toEqual(undefined);
+      expect(result).toEqual(null);
+    });
+
+    it('returns null when targetNode is not found and targetPosition is not defined', () => {
+      const edge = {
+        source: 'a',
+        target: 'fake',
+      };
+      const result = instance.getEdgeComponent(edge);
+
+      expect(result).toEqual(null);
     });
 
     it('handles a targetPosition', () => {
@@ -468,7 +482,7 @@ describe('GraphView component', () => {
     });
 
     it('returns true when the edge is selected', () => {
-      selected = edge;
+      selected = { edges: new Map([[`${edge.source}_${edge.target}`, edge]]) };
       output.setProps({
         edges,
         selected,
@@ -480,10 +494,12 @@ describe('GraphView component', () => {
     });
 
     it('returns false when the edge is not selected', () => {
-      selected = {
+      const edge = {
         source: 'b',
         target: 'c',
       };
+
+      selected = { edges: null }; // no edges selected
       output.setProps({
         edges,
         selected,
@@ -636,7 +652,7 @@ describe('GraphView component', () => {
     it('returns a selected node', () => {
       output.setProps({
         nodes: [node],
-        selected: node,
+        selected: { nodes: new Map([[node.id, node]]) },
       });
       const result = instance.getNodeComponent('test', node, 0);
 
@@ -838,6 +854,13 @@ describe('GraphView component', () => {
 
     it('drags an edge', () => {
       instance.canSwap.mockReturnValue(true);
+      instance.viewWrapper = {
+        current: {
+          querySelector: jest.fn().mockImplementation(selector => {
+            return {};
+          }),
+        },
+      };
       const draggedEdge = {
         source: 'a',
         target: 'b',
@@ -858,6 +881,13 @@ describe('GraphView component', () => {
 
     it('handles swapping the edge to a different node', () => {
       instance.canSwap.mockReturnValue(true);
+      instance.viewWrapper = {
+        current: {
+          querySelector: jest.fn().mockImplementation(selector => {
+            return {};
+          }),
+        },
+      };
       const draggedEdge = {
         source: 'a',
         target: 'b',
@@ -956,7 +986,10 @@ describe('GraphView component', () => {
       instance.selectedView = d3.select(document.createElement('g'));
       mouse = jest.fn().mockReturnValue([5, 15]);
       output.setProps({
-        nodes: [{ id: 'a', x: 5, y: 10 }, { id: 'b', x: 10, y: 20 }],
+        nodes: [
+          { id: 'a', x: 5, y: 10 },
+          { id: 'b', x: 10, y: 20 },
+        ],
       });
       output.setState({
         draggedEdge,
@@ -995,9 +1028,7 @@ describe('GraphView component', () => {
       event = {
         sourceEvent: {
           target: {
-            classList: {
-              contains: jest.fn().mockReturnValue(true),
-            },
+            matches: jest.fn().mockReturnValue(true),
             id: 'a_b',
           },
           buttons: 0,
@@ -1022,7 +1053,7 @@ describe('GraphView component', () => {
     });
 
     it('does nothing when the sourceEvent is not an edge', () => {
-      event.sourceEvent.target.classList.contains.mockReturnValue(false);
+      event.sourceEvent.target.matches = jest.fn().mockReturnValue(false);
       instance.handleZoomStart(event);
       expect(instance.dragEdge).not.toHaveBeenCalled();
     });
@@ -1040,7 +1071,15 @@ describe('GraphView component', () => {
     });
 
     it('drags the edge', () => {
+      instance.viewWrapper = {
+        current: {
+          querySelector: jest.fn().mockImplementation(selector => {
+            return {};
+          }),
+        },
+      };
       event.sourceEvent.buttons = 2;
+      instance.isArrowClicked = jest.fn().mockReturnValue(true);
       instance.handleZoomStart(event);
       expect(output.state().draggedEdge).toEqual(edge);
       expect(instance.dragEdge).toHaveBeenCalled();
@@ -1138,6 +1177,84 @@ describe('GraphView component', () => {
     it('calls panToEntity on the appropriate edge', () => {
       instance.panToEdge('a1', 'a2');
       expect(instance.panToEntity).toHaveBeenCalledWith(entity, false);
+    });
+  });
+
+  describe('handleKeyDown', () => {
+    it('ignores keydown when not focused', () => {
+      output.setState({ focused: false });
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'z',
+          char: 'z',
+          keyCode: 90,
+          metaKey: true,
+        })
+      );
+      expect(onUndo).not.toHaveBeenCalled();
+    });
+
+    it('handles keydown when focused', () => {
+      output.setState({ focused: true });
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'z',
+          char: 'z',
+          keyCode: 90,
+          metaKey: true,
+        })
+      );
+      expect(onUndo).toHaveBeenCalled();
+    });
+  });
+
+  describe('handleDocumentClick', () => {
+    it('removes focus when clicking outside svg', () => {
+      output.setState({ focused: true });
+      document.documentElement.dispatchEvent(new MouseEvent('mousedown'));
+      expect(instance.state.focused).toBe(false);
+    });
+
+    it('keeps focus when clicking inside svg', () => {
+      output.setState({ focused: true });
+      instance.graphSvg = {
+        current: document.createElementNS('http://www.w3.org/2000/svg', 'svg'),
+      };
+      const child = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      instance.graphSvg.current.appendChild(child);
+
+      child.dispatchEvent(new MouseEvent('mousedown'));
+      expect(instance.state.focused).toBe(true);
+    });
+  });
+
+  describe('handleMultipleSelected method', () => {
+    beforeEach(() => {
+      output.setProps({
+        edges: [
+          { source: 'a', target: 'b' },
+          { source: 'b', target: 'c' },
+        ],
+        nodes: [{ id: 'a', x: 1, y: 1 }, { id: 'b', x: 2, y: 2 }, { id: 'c' }],
+        nodeKey: 'id',
+      });
+    });
+
+    it('onSelect', () => {
+      const selectionStart = { x: 1, y: 1 };
+      const selectionEnd = { x: 100, y: 100 };
+
+      let actual = null;
+
+      output.setProps({
+        onSelect: selected => {
+          actual = selected;
+        },
+      });
+      instance.handleMultipleSelected(selectionStart, selectionEnd);
+      expect(actual.nodes.size).toEqual(2);
+      expect(actual.edges.size).toEqual(1);
     });
   });
 });

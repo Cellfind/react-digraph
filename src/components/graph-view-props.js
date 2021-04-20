@@ -3,6 +3,11 @@ import { type LayoutEngineType } from '../utilities/layout-engine/layout-engine-
 import { type IEdge } from './edge';
 import { type INode } from './node';
 
+export type IPoint = {
+  x: number,
+  y: number,
+};
+
 export type IBBox = {
   x: number,
   y: number,
@@ -10,8 +15,15 @@ export type IBBox = {
   height: number,
 };
 
+export type SelectionT = {
+  nodes: Map<string, INode> | null,
+  edges: Map<string, IEdge> | null,
+};
+
 export type IGraphViewProps = {
+  allowMultiselect?: boolean,
   backgroundFillId?: string,
+  disableBackspace?: boolean,
   edges: any[],
   edgeArrowSize?: number,
   edgeHandleSize?: number,
@@ -32,32 +44,37 @@ export type IGraphViewProps = {
   nodeSubtypes: any,
   nodeTypes: any,
   readOnly?: boolean,
-  selected: any,
+  selected?: null | SelectionT,
   showGraphControls?: boolean,
   zoomDelay?: number,
   zoomDur?: number,
   canCreateEdge?: (startNode?: INode, endNode?: INode) => boolean,
-  canDeleteEdge?: (selected: any) => boolean,
-  canDeleteNode?: (selected: any) => boolean,
-  canSwapEdge: (sourceNode: INode, targetNode: INode, edge: IEdge) => boolean,
+  canDeleteSelected?: (selected: SelectionT) => boolean,
+  canSwapEdge?: (
+    sourceNode: INode,
+    hoveredNode: INode | null,
+    swapEdge: IEdge
+  ) => boolean,
   onBackgroundClick?: (x: number, y: number, event: any) => void,
   onCutSelected?: () => void,
   onCopySelected?: () => void,
-  onCreateEdge: (sourceNode: INode, targetNode: INode) => void,
-  onCreateNode: (x: number, y: number, event: any) => void,
-  onContextMenu: (x: number, y: number, event: any) => void,
-  onDeleteEdge: (selectedEdge: IEdge, edges: IEdge[]) => void,
-  onDeleteNode: (selected: any, nodeId: string, nodes: any[]) => void,
-  onPasteSelected?: () => void,
-  onSelectEdge: (selectedEdge: IEdge) => void,
-  onSelectNode: (node: INode | null, event: any) => void,
-  onSwapEdge: (sourceNode: INode, targetNode: INode, edge: IEdge) => void,
+  onCreateEdge?: (sourceNode: INode, targetNode: INode) => void,
+  onCreateNode?: (x: number, y: number, event: any) => void,
+  onContextMenu?: (x: number, y: number, event: any) => void,
+  onDeleteSelected?: (selected: SelectionT) => void,
+  onPasteSelected?: (selected?: SelectionT | null, xyCoords?: IPoint) => void,
+  onSelect?: (selected: SelectionT, event?: any) => void,
+  onSwapEdge?: (sourceNode: INode, targetNode: INode, edge: IEdge) => void,
   onUndo?: () => void,
   onRedo?: () => void,
-  onUpdateNode: (node: INode) => void,
   onUnhandledKeydown?: (e: React.KeyboardEvent) => void,
   onContextMenuNode?: (e: React.MouseEvent, data: INode) => void,
   onContextMenuEdge?: (e: React.MouseEvent, data: IEdge) => void,
+  onUpdateNode?: (
+    node: INode,
+    updatedNodes?: Map<string, INode> | null
+  ) => void,
+  onArrowClicked?: (selectedEdge: IEdge) => void,
   renderBackground?: (gridSize?: number) => any,
   renderDefs?: () => any,
   renderNode?: (

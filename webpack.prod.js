@@ -1,6 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   mode: 'production',
@@ -81,30 +81,23 @@ module.exports = {
   },
 
   plugins: [
-    // new UglifyJSPlugin({
-    //   sourceMap: true
-    // }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production')
     })
   ],
 
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        sourceMap: true,
+      }),
+    ],
+  },
+
   externals: {
-    // TODO: figure out how to deal with externals
-    react: {
-      amd: 'react',
-      root: 'react',
-      global: 'React',
-      commonjs: 'react',
-      commonjs2: 'react'
-    },
-    'react-dom': {
-      amd: 'react-dom',
-      root: 'react-dom',
-      global: 'ReactDOM',
-      commonjs: 'react-dom',
-      commonjs2: 'react-dom'
-    },
+    react: 'commonjs react',
+    'react-dom': 'commonjs react-dom',
     tslib: 'tslib'
   }
 };

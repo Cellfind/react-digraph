@@ -2,6 +2,7 @@
 
 import { type IEdge } from '../components/edge';
 import { type INode } from '../components/node';
+import { type IPoint } from '../components/graph-view-props';
 import fastDeepEqual from 'fast-deep-equal';
 
 export type INodeMapNode = {
@@ -66,9 +67,11 @@ class GraphUtils {
         continue;
       }
 
-      nodeMapSourceNode =
-        nodesMap[`key-${edge.source != null ? edge.source : ''}`];
-      nodeMapTargetNode = nodesMap[`key-${edge.target}`];
+      const sourceID = `key-${edge.source != null ? edge.source : ''}`;
+      const targetID = `key-${edge.target}`;
+
+      nodeMapSourceNode = nodesMap[sourceID];
+      nodeMapTargetNode = nodesMap[targetID];
 
       // avoid an orphaned edge
       if (nodeMapSourceNode && nodeMapTargetNode) {
@@ -76,12 +79,16 @@ class GraphUtils {
         nodeMapTargetNode.incomingEdges.push(edge);
         nodeMapSourceNode.children.push(nodeMapTargetNode);
         nodeMapTargetNode.parents.push(nodeMapSourceNode);
+      } else {
+        // This can get noisy because linkNodesAndEdges runs a lot.
+        // The consumer should have cleared out the edges before rendering react-digraph
+        console.warn('react-digraph: Found orphaned edges');
       }
     }
   }
 
-  static removeElementFromDom(id: string) {
-    const container = document.getElementById(id);
+  static removeElementFromDom(id: string, searchElement?: any = document) {
+    const container = searchElement.querySelector(`#${id}`);
 
     if (container && container.parentNode) {
       container.parentNode.removeChild(container);
@@ -92,11 +99,19 @@ class GraphUtils {
     return false;
   }
 
-  static findParent(element: any, selector: string) {
-    if (element && element.matches && element.matches(selector)) {
+  static findParent(element: any, selector: string, stopAtSelector?: string) {
+    if (!element || (stopAtSelector && element?.matches?.(stopAtSelector))) {
+      return null;
+    }
+
+    if (element?.matches?.(selector)) {
       return element;
-    } else if (element && element.parentNode) {
-      return GraphUtils.findParent(element.parentNode, selector);
+    } else if (element?.parentNode) {
+      return GraphUtils.findParent(
+        element.parentNode,
+        selector,
+        stopAtSelector
+      );
     }
 
     return null;
@@ -151,6 +166,66 @@ class GraphUtils {
 
   static isEqual(prevNode: any, newNode: any) {
     return fastDeepEqual(prevNode, newNode);
+  }
+
+  static findNodesWithinArea(
+    start: IPoint,
+    end: IPoint,
+    nodes: INode[],
+    nodeKey: string
+  ): Map<string, INode> {
+    const smallerX = Math.min(start.x, end.x);
+    const smallerY = Math.min(start.y, end.y);
+    const largerX = Math.max(end.x, start.x);
+    const largerY = Math.max(end.y, start.y);
+
+    const foundNodesMap = new Map();
+
+    nodes.forEach(node => {
+      if (
+        node.x >= smallerX &&
+        node.x <= largerX &&
+        node.y >= smallerY &&
+        node.y <= largerY
+      ) {
+        foundNodesMap.set(node[nodeKey], node);
+      }
+    });
+
+    return foundNodesMap;
+  }
+
+  static findConnectedEdgesForNodes(
+    nodes: Map<string, INode>,
+    edgesMap: any,
+    nodeKey: string
+  ): Map<string, IEdge> {
+    const foundEdgesMap = new Map();
+
+    for (const nodeA of nodes) {
+      for (const nodeB of nodes) {
+        // nodeA and nodeB are map arrays: ["key", node]
+        // Find edges where A is connected to B or B is connected to A
+        const edgeAB = edgesMap[`${nodeA[1][nodeKey]}_${nodeB[1][nodeKey]}`];
+        const edgeBA = edgesMap[`${nodeB[1][nodeKey]}_${nodeA[1][nodeKey]}`];
+
+        if (edgeAB != null) {
+          foundEdgesMap.set(
+            `${edgeAB.edge.source}_${edgeAB.edge.target}`,
+            edgeAB.edge
+          );
+        }
+
+        if (edgeBA != null) {
+          foundEdgesMap.set(
+            `${edgeBA.edge.source}_${edgeBA.edge.target}`,
+            edgeBA.edge
+          );
+        }
+      }
+    }
+
+    return foundEdgesMap;
   }
 }
 
