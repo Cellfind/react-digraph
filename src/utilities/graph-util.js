@@ -17,6 +17,7 @@
 
 import { type IEdge } from '../components/edge';
 import { type INode } from '../components/node';
+//import { type IRegion } from '../components/region';
 import { type IPoint } from '../components/graph-view-props';
 import fastDeepEqual from 'fast-deep-equal';
 

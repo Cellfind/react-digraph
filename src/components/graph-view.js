@@ -32,6 +32,7 @@ import GraphControls from './graph-controls';
 import HighlightArea from './highlight-area';
 import GraphUtils, { type INodeMapNode } from '../utilities/graph-util';
 import Node, { type INode } from './node';
+import Region, { type IRegion } from './region';
 import {
   parsePathToXY,
   getEdgePathElement,
@@ -56,8 +57,10 @@ type IGraphViewState = {
   hoveredNode: boolean,
   nodesMap: any,
   edgesMap: any,
+  regionsMap: any,
   nodes: any[],
   edges: any[],
+  regions: any[],
   selectingNode: boolean,
   hoveredNodeData: INode | null,
   edgeEndNode: INode | null,
@@ -100,7 +103,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     nextProps: IGraphViewProps,
     prevState: IGraphViewState
   ) {
-    const { edges, nodeKey } = nextProps;
+    const { edges, nodeKey, regions } = nextProps;
     let nodes = nextProps.nodes;
     const nodesMap = GraphUtils.getNodesMap(nodes, nodeKey);
     const edgesMap = GraphUtils.getEdgesMap(edges);
@@ -137,8 +140,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
   nodeTimeouts: any;
   edgeTimeouts: any;
+  regionTimeouts: any;
   renderNodesTimeout: any;
   renderEdgesTimeout: any;
+  renderRegionsTimeout: any;
   zoom: any;
   viewWrapper: any;
   graphSvg: any;
@@ -154,8 +159,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
     this.nodeTimeouts = {};
     this.edgeTimeouts = {};
+    this.regionTimeouts = {};
     this.renderNodesTimeout = null;
     this.renderEdgesTimeout = null;
+    this.renderRegionsTimeout = null;
     this.viewWrapper = React.createRef();
     this.graphSvg = React.createRef();
     this.highlightAreaRef = React.createRef();
@@ -175,6 +182,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       hoveredNodeData: null,
       nodes: [],
       nodesMap: {},
+      regions: [],
+      regionsMap: {},
       selectedEdgeObj: null,
       selectedNodeObj: null,
       selectingNode: false,
@@ -339,6 +348,12 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     const nodesMapVar = nodesMap || this.state.nodesMap;
 
     return nodesMapVar ? nodesMapVar[`key-${id != null ? id : ''}`] : null;
+  }
+
+  getRegionById(id: string | null, regionsMap: any | null): IRegionMap | null {
+    //TODO:
+    // const nodesMapVar = nodesMap || this.state.nodesMap;
+    // return nodesMapVar ? nodesMapVar[`key-${id != null ? id : ''}`] : null;
   }
 
   getEdgeBySourceTarget(source: string, target: string): IEdge | null {
@@ -549,6 +564,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     }
   }
 
+  deleteRegion(selectedRegion: IRegion) {}
+
   handleDelete = (selected: SelectionT) => {
     const {
       canDeleteSelected,
@@ -606,9 +623,19 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         }
 
         break;
+      case 'y':
+        if (this.isControlKeyPressed(d)) {
+          onRedo && onRedo();
+        }
+
+        break;
       case 'z':
-        if (this.isControlKeyPressed(d) && onUndo) {
-          onUndo();
+        if (d.shiftKey) {
+          if (this.isControlKeyPressed(d)) {
+            onRedo && onRedo();
+          }
+        } else if (this.isControlKeyPressed(d)) {
+          onUndo && onUndo();
         }
 
         break;
@@ -618,11 +645,27 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         }
 
         break;
+      case 'x':
+        if (this.isControlKeyPressed(d) && selected) {
+          onCutSelected && onCutSelected();
+        }
+
+        break;
       case 'v':
         if (this.isControlKeyPressed(d) && selected) {
           const { x, y } = mousePosition || { x: 0, y: 0 };
 
           onPasteSelected && onPasteSelected(selected, { x, y });
+        }
+
+        break;
+      case 'g':
+        if (
+          this.isControlKeyPressed(d) &&
+          selected &&
+          (selected.nodes?.size || selected.edges?.size)
+        ) {
+          this.createNewRegion(selected);
         }
 
         break;
@@ -985,6 +1028,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         this.endDragEdge({ edgeEndNode: null });
       }
     }
+  }
+
+  createNewRegion(selected: SelectionT) {
+    //onCreateRegion
   }
 
   handleNodeUpdate = (position: any, nodeId: string, shiftKey: boolean) => {
@@ -1468,6 +1515,80 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
     return !!selected?.edges?.has(edgeID);
   };
 
+  getRegionComponent = (id: string, region: IRegion) => {
+    const {
+      // nodeTypes,
+      // nodeSubtypes,
+      // nodeSize,
+      // nodeHeight,
+      // nodeWidth,
+      // renderNode,
+      // renderNodeText,
+      // nodeKey,
+      // maxTitleChars,
+      // onContextMenuNode,
+      // renderNodeHover,
+      // centerNodeOnMove,
+    } = this.props;
+
+    return <Region />;
+  };
+
+  renderRegions = () => {
+    if (!this.entities) {
+      return;
+    }
+
+    this.state.regions.forEach((region, i) => {
+      this.asyncRenderRegion(region);
+    });
+  };
+
+  asyncRenderRegion(region: IRegion) {
+    const nodeKey = this.props.nodeKey;
+    const timeoutId = `regions-${region[nodeKey]}`;
+
+    cancelAnimationFrame(this.regionTimeouts[timeoutId]);
+    this.regionTimeouts[timeoutId] = requestAnimationFrame(() => {
+      this.syncRenderRegion(region);
+    });
+  }
+
+  syncRenderRegion(region: IRegion) {
+    const nodeKey = this.props.nodeKey;
+    const id = `regions-${node[nodeKey]}`;
+    const element: any = this.getRegionComponent(id, region);
+
+    this.renderRegion(id, element);
+  }
+
+  renderRegion(id: string, element: Element) {
+    if (!this.entities) {
+      return null;
+    }
+
+    const containerId = `${id}-container`;
+    let regionContainer:
+      | HTMLElement
+      | Element
+      | null = this.viewWrapper.current.querySelector(`[id='${containerId}']`);
+
+    if (!regionContainer) {
+      regionContainer = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'g'
+      );
+      regionContainer.id = containerId;
+      this.entities.appendChild(regionContainer);
+    }
+
+    // ReactDOM.render replaces the insides of an element This renders the element
+    // into the regionContainer
+    const anyElement: any = element;
+
+    ReactDOM.render(anyElement, regionContainer);
+  }
+
   getNodeComponent = (id: string, node: INode) => {
     const {
       nodeTypes,
@@ -1792,7 +1913,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
               backgroundFillId={backgroundFillId}
               renderBackground={renderBackground}
             />
-
+            <g className="custom-group-renders" />
             <g className="entities" ref={el => (this.entities = el)} />
             {selectionStart && (
               <HighlightArea
