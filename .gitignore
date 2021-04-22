@@ -2,6 +2,7 @@ coverage/
 node_modules/
 dist/hot
 dist/
+.npmrc
 
 # temporary jenkins files
 test/test.js.tap
@@ -18,3 +19,4 @@ npm-debug.log
 
 .DS_Store
 *.log
+.npmrc
