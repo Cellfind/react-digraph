@@ -587,6 +587,7 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
               <option value={undefined}>None</option>
               <option value={'SnapToGrid'}>Snap to Grid</option>
               <option value={'VerticalTree'}>Vertical Tree</option>
+              <option value={'HorizontalTree'}>Horizontal Tree</option>
             </select>
           </div>
           <div className="pan-list">

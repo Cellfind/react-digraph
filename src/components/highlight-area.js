@@ -13,12 +13,6 @@ export default React.forwardRef(function HighlightArea(props, ref) {
       ref={ref}
       x={width > 0 ? startPoint.x : endPoint.x}
       y={height > 0 ? startPoint.y : endPoint.y}
-      style={{
-        fill: 'rgb(0, 149, 210)',
-        fillOpacity: 0.15,
-        stroke: 'rgba(57, 165, 209, 0.5)',
-        strokeWidth: 2,
-      }}
     ></rect>
   );
 });

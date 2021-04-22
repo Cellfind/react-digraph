@@ -158,4 +158,30 @@ $button-size: 31px;
   .circle {
     fill: $light-grey;
   }
+
+  .highlight-area {
+    fill: rgb(0, 149, 210);
+    fill-opacity: 0.15;
+    stroke: rgba(57, 165, 209, 0.5);
+    stroke-width: 2;
+  }
+
+  .region {
+    fill: rgb(0, 149, 210);
+    fill-opacity: 0.15;
+    stroke: rgba(57, 165, 209, 0.5);
+    stroke-width: 2;
+  }
+  
+  .region-top {
+    fill-opacity: 0;
+    stroke: rgba(57, 165, 209, 0.5);
+    stroke-width: 2;
+  }
+
+  .region-text {
+    font-size: 21px;
+    fill: #333333;
+  }
+
 }

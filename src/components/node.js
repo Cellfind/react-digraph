@@ -286,7 +286,7 @@ function Node({
           maxTitleChars={maxTitleChars}
         />
       )}
-      {hovered && renderNodeHover(data, id)}
+      {hovered && renderNodeHover && renderNodeHover(data, id)}
     </g>
   );
 }
