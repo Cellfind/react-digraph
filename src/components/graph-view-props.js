@@ -1,20 +1,4 @@
 // @flow
-/*
-  Copyright(c) 2018 Uber Technologies, Inc.
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-          http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-
 import { type LayoutEngineType } from '../utilities/layout-engine/layout-engine-types';
 import { type IEdge } from './edge';
 import { type INode } from './node';
@@ -72,6 +56,7 @@ export type IGraphViewProps = {
     swapEdge: IEdge
   ) => boolean,
   onBackgroundClick?: (x: number, y: number, event: any) => void,
+  onCutSelected?: () => void,
   onCopySelected?: () => void,
   onCreateEdge?: (sourceNode: INode, targetNode: INode) => void,
   onCreateNode?: (x: number, y: number, event: any) => void,
@@ -81,6 +66,10 @@ export type IGraphViewProps = {
   onSelect?: (selected: SelectionT, event?: any) => void,
   onSwapEdge?: (sourceNode: INode, targetNode: INode, edge: IEdge) => void,
   onUndo?: () => void,
+  onRedo?: () => void,
+  onUnhandledKeydown?: (e: React.KeyboardEvent) => void,
+  onContextMenuNode?: (e: React.MouseEvent, data: INode) => void,
+  onContextMenuEdge?: (e: React.MouseEvent, data: IEdge) => void,
   onUpdateNode?: (
     node: INode,
     updatedNodes?: Map<string, INode> | null
@@ -95,6 +84,7 @@ export type IGraphViewProps = {
     selected: boolean,
     hovered: boolean
   ) => any,
+  renderDropShadowDef?: () => any,
   afterRenderEdge?: (
     id: string,
     element: any,
@@ -103,6 +93,7 @@ export type IGraphViewProps = {
     isEdgeSelected: boolean
   ) => void,
   renderNodeText?: (data: any, id: string | number, isSelected: boolean) => any,
+  renderNodeHover?: (data: any, id: string | number) => any,
   rotateEdgeHandle?: boolean,
   centerNodeOnMove?: boolean,
   initialBBox?: IBBox,

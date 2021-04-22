@@ -33,6 +33,7 @@ type IDefsProps = {
   nodeSubtypes: any,
   edgeTypes: any,
   renderDefs?: () => any | null,
+  renderDropShadowDef?: any | null,
 };
 
 export function generateGraphConfigDefs(typesObj: any) {

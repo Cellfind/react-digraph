@@ -283,6 +283,69 @@ You have access to `d3` mouse event in `onCreateNode` function.
 ```
 
 
+Prop Types:
+```
+  nodes: any[];
+  edges: any[];
+  minZoom?: number;
+  maxZoom?: number;
+  readOnly?: boolean;
+  maxTitleChars?: number;
+  nodeSize?: number;
+  edgeHandleSize?: number;
+  edgeArrowSize?: number;
+  zoomDelay?: number;
+  zoomDur?: number;
+  showGraphControls?: boolean;
+  nodeKey: string;
+  gridSize?: number;
+  gridSpacing?: number;
+  gridDotSize?: number;
+  backgroundFillId?: string;
+  nodeTypes: any;
+  nodeSubtypes: any;
+  edgeTypes: any;
+  selected: any;
+  onBackgroundClick?: (x: number, y: number) => void;
+  onDeleteNode: (selected: any, nodeId: string, nodes: any[]) => void;
+  onSelectNode: (node: INode | null) => void;
+  onCreateNode: (x: number, y: number, event: object) => void;
+  onCreateEdge: (sourceNode: INode, targetNode: INode) => void;
+  onDeleteEdge: (selectedEdge: IEdge, edges: IEdge[]) => void;
+  onUpdateNode: (node: INode) => void;
+  onSwapEdge: (sourceNode: INode, targetNode: INode, edge: IEdge) => void;
+  onSelectEdge: (selectedEdge: IEdge) => void;
+  canDeleteNode?: (selected: any) => boolean;
+  canDeleteEdge?: (selected: any) => boolean;
+  canCreateEdge?: (startNode?: INode, endNode?: INode) => boolean;
+  canSwapEdge?: (sourceNode: INode, targetNode: INode, edge: IEdge) => boolean;
+  afterRenderEdge?: (id: string, element: any, edge: IEdge, edgeContainer: any, isEdgeSelected: boolean) => void;
+  canSwapEdge?: (sourceNode: INode, targetNode: INode, edge: IEdge) => boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  onCopySelected?: () => void;
+  onCutSelected?: () => void;
+  onPasteSelected?: () => void;
+  renderBackground?: (gridSize?: number) => any;
+  renderDefs?: () => any;
+  renderNode?: (
+    nodeRef: any,
+    data: any,
+    index: number,
+    selected: boolean,
+    hovered: boolean
+  ) => any;
+  renderNodeText?: (data: any, id: string | number, isSelected: boolean) => any;
+  layoutEngineType?: LayoutEngineType;
+  rotateEdgeHandle?: boolean;
+  centerNodeOnMove?: boolean;
+  initialBBox?: IBBox;
+  graphConfig?: object;
+  nodeSizeOverridesAllowed?: boolean;
+  nodeLocationOverrides?: {[string]: {x?: number, y?:number}}
+```
+
+
 ## Prop Types:
 
 See prop types in the [typings folder](typings/index.d.ts).

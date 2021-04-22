@@ -1,9 +1,8 @@
 {
-  "name": "react-digraph",
+  "name": "@cellfind/react-digraph",
   "description": "directed graph react component",
-  "version": "8.0.0-beta.2",
+  "version": "1.0.9",
   "keywords": [
-    "uber-library",
     "babel",
     "es6",
     "d3",
@@ -13,11 +12,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/uber/react-digraph.git"
+    "url": "https://github.com/Cellfind/react-digraph.git"
   },
   "bugs": {
-    "url": "https://github.com/uber/react-digraph/issues/new",
-    "email": "antonb@uber.com"
+    "url": "https://github.com/Cellfind/react-digraph/issues/new",
+    "email": "clayton.barnard@cellfind.co.za"
   },
   "engines": {
     "node": ">= 0.10.0"
@@ -26,17 +25,17 @@
   "main": "dist/main.min.js",
   "types": "./typings/index.d.ts",
   "peerDependencies": {
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "d3": "^5.16.0"
   },
   "dependencies": {
-    "dagre": "^0.8.2",
-    "fast-deep-equal": "^2.0.1",
-    "html-react-parser": "^0.6.1",
-    "kld-affine": "2.0.4",
-    "kld-intersections": "^0.4.3",
-    "line-intersect": "^2.1.1",
+    "dagre": "^0.8.5",
+    "fast-deep-equal": "^3.1.3",
+    "html-react-parser": "^1.2.6",
+    "kld-affine": "2.1.1",
+    "kld-intersections": "^0.7.0",
+    "line-intersect": "^3.0.0",
     "svg-intersections": "^0.4.0"
   },
   "devDependencies": {
@@ -79,14 +78,14 @@
     "eslint-loader": "^2.1.0",
     "eslint-plugin-cup": "^2.0.1",
     "eslint-plugin-es6-recommended": "^0.1.2",
-    "eslint-plugin-flowtype": "^2.50.0",
-    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-flowtype": "^4.3.0",
+    "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-import-order": "^2.1.4",
-    "eslint-plugin-jest": "^22.6.4",
-    "eslint-plugin-jsx-a11y": "^6.1.1",
-    "eslint-plugin-prettier": "^3.1.0",
-    "eslint-plugin-react": "^7.5.1",
-    "eslint-plugin-react-hooks": "^1.6.0",
+    "eslint-plugin-jest": "^22.20.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.1",
+    "eslint-plugin-react": "^7.23.2",
+    "eslint-plugin-react-hooks": "^2.2.0",
     "flow-bin": "^0.86.0",
     "husky": "^2.4.0",
     "jest": "^26.5.0",
@@ -94,13 +93,13 @@
     "lint-staged": "^8.2.0",
     "live-server": "^1.2.0",
     "node-sass": "^4.9.2",
-    "npm-run-all": "^4.1.3",
+    "npm-run-all": "^4.1.5",
     "opn-cli": "3.1.0",
     "prettier": "^1.19.1",
     "prop-types": "^15.6.0",
-    "react": "^16.14.0",
+    "react": "^17.0.2",
     "react-ace": "^6.1.4",
-    "react-dom": "^16.12.0",
+    "react-dom": "^17.0.2",
     "react-router-dom": "^5.0.0",
     "rimraf": "^2.7.1",
     "sass-loader": "^10.0.2",
@@ -177,6 +176,6 @@
     }
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org"
+    "registry": "https://npm.pkg.github.com/"
   }
 }

@@ -6,27 +6,23 @@
 
 import * as React from 'react';
 
-import {
-  GraphView,
+import GraphViewFast, {
   type IEdgeType as IEdge,
   type INodeType as INode,
   type LayoutEngineType,
-  type SelectionT,
-  type IPoint,
-} from '../';
+} from '../../';
 import GraphConfig, {
   edgeTypes,
   EMPTY_EDGE_TYPE,
   EMPTY_TYPE,
   NODE_KEY,
   nodeTypes,
-  COMPLEX_CIRCLE_TYPE,
   POLY_TYPE,
   SPECIAL_CHILD_SUBTYPE,
   SPECIAL_EDGE_TYPE,
   SPECIAL_TYPE,
   SKINNY_TYPE,
-} from './graph-config'; // Configures node/edge types
+} from '../graph-config'; // Configures node/edge types
 
 type IGraph = {
   nodes: INode[],
@@ -40,14 +36,12 @@ const sample: IGraph = {
   edges: [
     {
       handleText: '5',
-      handleTooltipText: '5',
       source: 'start1',
       target: 'a1',
       type: SPECIAL_EDGE_TYPE,
     },
     {
       handleText: '5',
-      handleTooltipText: 'This edge connects Node A and Node B',
       source: 'a1',
       target: 'a2',
       type: SPECIAL_EDGE_TYPE,
@@ -151,13 +145,6 @@ const sample: IGraph = {
       x: 0,
       y: 300,
     },
-    {
-      id: 'a8',
-      title: 'Node G (8)',
-      type: COMPLEX_CIRCLE_TYPE,
-      x: -200,
-      y: 400,
-    },
   ],
 };
 
@@ -208,32 +195,23 @@ type IGraphProps = {};
 type IGraphState = {
   graph: any,
   selected: any,
-  selected: SelectionT | null,
   totalNodes: number,
-  copiedNode: null | INode,
-  copiedNodes: null | INode[],
-  copiedEdges: null | IEdge[],
+  copiedNode: any,
   layoutEngineType?: LayoutEngineType,
-  allowMultiselect: boolean,
 };
 
 class Graph extends React.Component<IGraphProps, IGraphState> {
-  GraphView: any;
+  GraphView;
 
   constructor(props: IGraphProps) {
     super(props);
 
     this.state = {
       copiedNode: null,
-      copiedNodes: null,
-      copiedEdges: null,
       graph: sample,
       layoutEngineType: undefined,
       selected: null,
-      selectedNodes: null,
-      selectedEdges: null,
       totalNodes: sample.nodes.length,
-      allowMultiselect: true,
     };
 
     this.GraphView = React.createRef();
@@ -328,10 +306,15 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
     this.setState({ graph });
   };
 
-  onSelect = (selected: SelectionT) => {
-    this.setState({
-      selected,
-    });
+  // Node 'mouseUp' handler
+  onSelectNode = (viewNode: INode | null) => {
+    // Deselect events will send Null viewNode
+    this.setState({ selected: viewNode });
+  };
+
+  // Edge 'mouseUp' handler
+  onSelectEdge = (viewEdge: IEdge) => {
+    this.setState({ selected: viewEdge });
   };
 
   // Updates the graph with a new node
@@ -358,32 +341,19 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
 
   // Deletes a node from the graph
   onDeleteNode = (viewNode: INode, nodeId: string, nodeArr: INode[]) => {
-    // Note: onDeleteEdge is also called from react-digraph for connected nodes
     const graph = this.state.graph;
+    // Delete any connected edges
+    const newEdges = graph.edges.filter((edge, i) => {
+      return (
+        edge.source !== viewNode[NODE_KEY] && edge.target !== viewNode[NODE_KEY]
+      );
+    });
 
     graph.nodes = nodeArr;
-
-    this.deleteEdgesForNode(nodeId);
+    graph.edges = newEdges;
 
     this.setState({ graph, selected: null });
   };
-
-  // Whenever a node is deleted the consumer must delete any connected edges.
-  // react-digraph won't call deleteEdge for multi-selected edges, only single edge selections.
-  deleteEdgesForNode(nodeID: string) {
-    const { graph } = this.state;
-    const edgesToDelete = graph.edges.filter(
-      edge => edge.source === nodeID || edge.target === nodeID
-    );
-
-    const newEdges = graph.edges.filter(
-      edge => edge.source !== nodeID && edge.target !== nodeID
-    );
-
-    edgesToDelete.forEach(edge => {
-      this.onDeleteEdge(edge, newEdges);
-    });
-  }
 
   // Creates a new node between two edges
   onCreateEdge = (sourceViewNode: INode, targetViewNode: INode) => {
@@ -406,10 +376,7 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
       graph.edges = [...graph.edges, viewEdge];
       this.setState({
         graph,
-        selected: {
-          nodes: null,
-          edges: new Map([[`${viewEdge.source}_${viewEdge.target}`, viewEdge]]),
-        },
+        selected: viewEdge,
       });
     }
   };
@@ -457,98 +424,37 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
   };
 
   onCopySelected = () => {
-    // This is a no-op. Maybe log something if you want.
-    // Pasting uses the state.selected property within the onPasteSelected function.
-  };
+    if (this.state.selected.source) {
+      console.warn('Cannot copy selected edges, try selecting a node instead.');
 
-  // Pastes the selection to mouse position
-  onPasteSelected = (selection?: SelectionT | null, mousePosition?: IPoint) => {
-    const { graph, selected } = this.state;
-    const { x: mouseX, y: mouseY } = mousePosition || { x: 0, y: 0 };
-
-    if (!selected?.nodes?.size) {
-      // do nothing if there are no nodes selected
       return;
     }
 
-    let cornerX;
-    let cornerY;
+    const x = this.state.selected.x + 10;
+    const y = this.state.selected.y + 10;
 
-    selected?.nodes?.forEach((copiedNode: INode) => {
-      // find left-most node and record x position
-      if (cornerX == null || (copiedNode.x || 0) < cornerX) {
-        cornerX = copiedNode.x || 0;
-      }
-
-      // find top-most node and record y position
-      if (cornerY == null || (copiedNode.y || 0) < cornerY) {
-        cornerY = copiedNode.y || 0;
-      }
-    });
-
-    // Keep track of the mapping of old IDs to new IDs
-    // so we can recreate the edges
-    const newIDs = {};
-
-    // Every node position is relative to the top and left-most corner
-    const newNodes = new Map(
-      [...(selected?.nodes?.values() || [])].map((copiedNode: INode) => {
-        const x = mouseX + ((copiedNode.x || 0) - cornerX);
-        const y = mouseY + ((copiedNode.y || 0) - cornerY);
-
-        // Here you would usually create a new node using an API
-        // We don't have an API, so we'll mock out the node ID
-        // and create a copied node.
-        const id = `${copiedNode.id}_${Date.now()}`;
-
-        newIDs[copiedNode.id] = id;
-
-        return [
-          id,
-          {
-            ...copiedNode,
-            id,
-            x,
-            y,
-          },
-        ];
-      })
-    );
-
-    const newEdges = new Map(
-      [...(selected?.edges?.values() || [])].map(copiedEdge => {
-        const source = newIDs[copiedEdge.source];
-        const target = newIDs[copiedEdge.target];
-
-        return [
-          `${source}_${target}`,
-          {
-            ...copiedEdge,
-            source,
-            target,
-          },
-        ];
-      })
-    );
-
-    graph.nodes = [...graph.nodes, ...Array.from(newNodes.values())];
-    graph.edges = [...graph.edges, ...Array.from(newEdges.values())];
-
-    // Select the new nodes and edges
     this.setState({
-      selected: {
-        nodes: newNodes,
-        edges: newEdges,
-      },
+      copiedNode: { ...this.state.selected, x, y },
     });
   };
 
-  handleChangeLayoutEngineType = (event: any) => {
-    const value: any = event.target.value;
-    const layoutEngineType: LayoutEngineType = value;
+  onPasteSelected = () => {
+    if (!this.state.copiedNode) {
+      console.warn(
+        'No node is currently in the copy queue. Try selecting a node and copying it with Ctrl/Command-C'
+      );
+    }
 
+    const graph = this.state.graph;
+    const newNode = { ...this.state.copiedNode, id: Date.now() };
+
+    graph.nodes = [...graph.nodes, newNode];
+    this.forceUpdate();
+  };
+
+  handleChangeLayoutEngineType = (event: any) => {
     this.setState({
-      layoutEngineType,
+      layoutEngineType: (event.target.value: LayoutEngineType | 'None'),
     });
   };
 
@@ -564,11 +470,11 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
 
   render() {
     const { nodes, edges } = this.state.graph;
-    const { selected, allowMultiselect, layoutEngineType } = this.state;
+    const selected = this.state.selected;
     const { NodeTypes, NodeSubtypes, EdgeTypes } = GraphConfig;
 
     return (
-      <>
+      <div id="graph">
         <div className="graph-header">
           <button onClick={this.addStartNode}>Add Node</button>
           <button onClick={this.deleteStartNode}>Delete Node</button>
@@ -587,7 +493,6 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
               <option value={undefined}>None</option>
               <option value={'SnapToGrid'}>Snap to Grid</option>
               <option value={'VerticalTree'}>Vertical Tree</option>
-              <option value={'HorizontalTree'}>Horizontal Tree</option>
             </select>
           </div>
           <div className="pan-list">
@@ -601,31 +506,29 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
             </select>
           </div>
         </div>
-        <div id="graph" style={{ height: 'calc(100% - 87px)' }}>
-          <GraphView
-            ref={el => (this.GraphView = el)}
-            allowMultiselect={allowMultiselect}
-            nodeKey={NODE_KEY}
-            nodes={nodes}
-            edges={edges}
-            selected={selected}
-            nodeTypes={NodeTypes}
-            nodeSubtypes={NodeSubtypes}
-            edgeTypes={EdgeTypes}
-            onSelect={this.onSelect}
-            onCreateNode={this.onCreateNode}
-            onUpdateNode={this.onUpdateNode}
-            onDeleteNode={this.onDeleteNode}
-            onCreateEdge={this.onCreateEdge}
-            onSwapEdge={this.onSwapEdge}
-            onDeleteEdge={this.onDeleteEdge}
-            onUndo={this.onUndo}
-            onCopySelected={this.onCopySelected}
-            onPasteSelected={this.onPasteSelected}
-            layoutEngineType={layoutEngineType}
-          />
-        </div>
-      </>
+        <GraphViewFast
+          ref={el => (this.GraphView = el)}
+          nodeKey={NODE_KEY}
+          nodes={nodes}
+          edges={edges}
+          selected={selected}
+          nodeTypes={NodeTypes}
+          nodeSubtypes={NodeSubtypes}
+          edgeTypes={EdgeTypes}
+          onSelectNode={this.onSelectNode}
+          onCreateNode={this.onCreateNode}
+          onUpdateNode={this.onUpdateNode}
+          onDeleteNode={this.onDeleteNode}
+          onSelectEdge={this.onSelectEdge}
+          onCreateEdge={this.onCreateEdge}
+          onSwapEdge={this.onSwapEdge}
+          onDeleteEdge={this.onDeleteEdge}
+          onUndo={this.onUndo}
+          onCopySelected={this.onCopySelected}
+          onPasteSelected={this.onPasteSelected}
+          layoutEngineType={this.state.layoutEngineType}
+        />
+      </div>
     );
   }
 }

@@ -34,6 +34,7 @@ export type IEdge = {
   target: string,
   type?: null | string,
   handleText?: string,
+
   handleTooltipText?: string,
   label_from?: string,
   label_to?: string,
@@ -57,6 +58,7 @@ type IEdgeProps = {
   isSelected: boolean,
   nodeKey: string,
   viewWrapperElem: HTMLDivElement,
+  onEdgeContextMenu: (event: any, data: any) => void,
   rotateEdgeHandle?: boolean,
   isBeingDragged: boolean,
 };
@@ -73,6 +75,7 @@ function Edge({
   targetNode,
   nodeKey,
   isBeingDragged = false,
+  onEdgeContextMenu = () => {},
 }: IEdgeProps) {
   const edgePathRef = useRef();
   const edgeOverlayRef = useRef();
@@ -117,11 +120,16 @@ function Edge({
     pointerEvents: isBeingDragged ? 'none' : 'auto',
   };
 
+  const onEdgeContext = event => {
+    onEdgeContextMenu(event, data);
+  };
+
   return (
     <g
       className="edge-container"
       data-source={data.source}
       data-target={data.target}
+      onContextMenu={onEdgeContext}
     >
       <g className={className}>
         <path

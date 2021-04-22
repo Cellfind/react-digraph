@@ -1,20 +1,4 @@
 // @flow
-/*
-  Copyright(c) 2018 Uber Technologies, Inc.
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-          http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-
 import * as d3 from 'd3';
 import * as React from 'react';
 import ReactDOM from 'react-dom';
@@ -598,13 +582,20 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       selected,
       disableBackspace,
       onUndo,
+      onRedo,
       onCopySelected,
+      onCutSelected,
       onPasteSelected,
+      onUnhandledKeydown,
     } = this.props;
     const { focused, mousePosition } = this.state;
 
     // Conditionally ignore keypress events on the window
     if (!focused) {
+      if (onUnhandledKeydown) {
+        onUnhandledKeydown(d);
+      }
+
       return;
     }
 
@@ -624,18 +615,18 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
         break;
       case 'y':
-        if (this.isControlKeyPressed(d)) {
-          onRedo && onRedo();
+        if (this.isControlKeyPressed(d) && onRedo) {
+          onRedo();
         }
 
         break;
       case 'z':
         if (d.shiftKey) {
-          if (this.isControlKeyPressed(d)) {
-            onRedo && onRedo();
+          if (this.isControlKeyPressed(d) && onRedo) {
+            onRedo();
           }
-        } else if (this.isControlKeyPressed(d)) {
-          onUndo && onUndo();
+        } else if (this.isControlKeyPressed(d) && onUndo) {
+          onUndo();
         }
 
         break;
@@ -646,8 +637,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
         break;
       case 'x':
-        if (this.isControlKeyPressed(d) && selected) {
-          onCutSelected && onCutSelected();
+        if (this.isControlKeyPressed(d) && selected && onCutSelected) {
+          onCutSelected();
         }
 
         break;
@@ -670,6 +661,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
 
         break;
       default:
+        if (onUnhandledKeydown) {
+          onUnhandledKeydown(d);
+        }
+
         break;
     }
   };
@@ -1600,6 +1595,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       renderNodeText,
       nodeKey,
       maxTitleChars,
+      onContextMenuNode,
+      renderNodeHover,
       centerNodeOnMove,
     } = this.props;
 
@@ -1619,6 +1616,8 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         onNodeMove={this.handleNodeMove}
         onNodeUpdate={this.handleNodeUpdate}
         onNodeSelected={this.handleNodeSelected}
+        onNodeContextMenu={onContextMenuNode}
+        renderNodeHover={renderNodeHover}
         renderNode={renderNode}
         renderNodeText={renderNodeText}
         isSelected={this.isNodeSelected(node)}
@@ -1734,6 +1733,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
         viewWrapperElem={this.viewWrapper.current}
         isSelected={this.isEdgeSelected(edge)}
         rotateEdgeHandle={rotateEdgeHandle}
+        onEdgeContextMenu={this.props.onContextMenuEdge}
         isBeingDragged={!!targetPosition}
       />
     );
@@ -1884,6 +1884,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
       edgeTypes,
       showGraphControls,
       renderDefs,
+      renderDropShadowDef,
       gridSize,
       backgroundFillId,
       renderBackground,
@@ -1906,6 +1907,7 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
             nodeSubtypes={nodeSubtypes}
             edgeTypes={edgeTypes}
             renderDefs={renderDefs}
+            renderDropShadowDef={renderDropShadowDef}
           />
           <g className="view" ref={el => (this.view = el)}>
             <Background
@@ -1913,7 +1915,10 @@ class GraphView extends React.Component<IGraphViewProps, IGraphViewState> {
               backgroundFillId={backgroundFillId}
               renderBackground={renderBackground}
             />
-            <g className="custom-group-renders" />
+            <g
+              className="custom-group-renders"
+              ref={el => (this.customGroup = el)}
+            />
             <g className="entities" ref={el => (this.entities = el)} />
             {selectionStart && (
               <HighlightArea
